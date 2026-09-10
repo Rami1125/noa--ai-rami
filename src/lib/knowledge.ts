@@ -66,6 +66,8 @@ export const NOA_KNOWLEDGE_BASE = {
       circular_waste:
         "המשאית שמביאה חומר לוקחת פסולת — אספקת שקי בלה ריקים לפינוי מוסדר וטופס 4 מהיר",
       dispatch_phone: "050-8860896",
+      noa_whatsapp_phone: "+972508861080",
+      noa_whatsapp_display: "+972 50-886-1080",
       office_phone: "077-2374865",
     },
   },

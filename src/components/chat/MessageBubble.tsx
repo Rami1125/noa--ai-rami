@@ -2,12 +2,32 @@ import { CheckCheck, Check, MapPin, Navigation, Package, Clock, User } from "luc
 
 import { cn } from "@/lib/utils";
 import { ACTION_LABELS, type Message, type TaskCard } from "@/lib/chat-data";
+import type { TypingUser } from "@/lib/typing-events";
 
 function Ticks({ status }: { status: Message["status"] }) {
   if (!status) return null;
-  if (status === "sent") return <Check className="size-4 text-wa-meta" />;
+
+  if (status === "sent") {
+    return (
+      <span title="נשלח לשרת" aria-label="נשלח" className="inline-flex items-center">
+        <Check className="size-3.5 stroke-[2.2] text-wa-meta" />
+      </span>
+    );
+  }
+
+  if (status === "delivered") {
+    return (
+      <span title="נמסר למקבל (V כפול אפור)" aria-label="נמסר" className="inline-flex items-center">
+        <CheckCheck className="size-3.5 stroke-[2.2] text-wa-meta" />
+      </span>
+    );
+  }
+
+  // status === "read"
   return (
-    <CheckCheck className={cn("size-4", status === "read" ? "text-wa-tick" : "text-wa-meta")} />
+    <span title="נקרא (V כפול כחול)" aria-label="נקרא" className="inline-flex items-center">
+      <CheckCheck className="size-3.5 stroke-[2.4] text-wa-tick" />
+    </span>
   );
 }
 
@@ -84,17 +104,49 @@ export function MessageBubble({ message }: { message: Message }) {
   );
 }
 
-export function TypingIndicator() {
+export function TypingIndicator({
+  users,
+  fallbackName = "נועה AI",
+}: {
+  users?: TypingUser[];
+  fallbackName?: string;
+}) {
+  const activeUsers = users && users.length > 0 ? users : null;
+  const firstUser = activeUsers?.[0];
+
+  let label = `${fallbackName} מקליד/ה`;
+  if (activeUsers) {
+    if (activeUsers.length === 1) {
+      label = firstUser?.statusText || `${firstUser?.userName} מקליד/ה`;
+    } else if (activeUsers.length === 2) {
+      label = `${activeUsers[0].userName} ו-${activeUsers[1].userName} מקלידים`;
+    } else {
+      label = `${activeUsers[0].userName} ו-${activeUsers.length - 1} נוספים מקלידים`;
+    }
+  }
+
   return (
-    <div className="flex justify-start">
-      <div className="flex items-center gap-2 rounded-lg rounded-es-none bg-wa-bubble-in px-3 py-2.5 shadow-sm">
-        <span className="text-xs text-wa-meta">נועה מקלידה</span>
+    <div className="wa-pop flex items-end gap-2 justify-start my-1.5">
+      {firstUser?.avatar ? (
+        <img
+          src={firstUser.avatar}
+          alt={firstUser.userName}
+          className="size-7 rounded-full object-cover shadow-xs ring-1 ring-wa-divider shrink-0"
+        />
+      ) : (
+        <div className="size-7 rounded-full bg-wa-panel flex items-center justify-center text-[11px] font-semibold text-wa-meta border border-wa-divider shrink-0">
+          {firstUser ? firstUser.userName.charAt(0) : "נ"}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2.5 rounded-lg rounded-es-none bg-wa-bubble-in px-3.5 py-2 shadow-xs border border-wa-divider/30">
+        <span className="text-xs font-medium text-wa-bubble-text">{label}</span>
         <span className="flex items-center gap-1">
           {[0, 1, 2].map((index) => (
             <span
               key={index}
-              className="size-1.5 rounded-full bg-wa-meta"
-              style={{ animation: `wa-typing 1.2s ${index * 0.18}s infinite ease-in-out` }}
+              className="size-1.5 rounded-full bg-wa-green"
+              style={{ animation: `wa-typing 1.1s ${index * 0.16}s infinite ease-in-out` }}
             />
           ))}
         </span>

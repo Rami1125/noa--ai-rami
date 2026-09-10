@@ -10,16 +10,16 @@ import {
   Smile,
   Sticker,
   Trash2,
-  X,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { EMOJIS } from "@/lib/chat-data";
 import { QuickReplyChips } from "@/components/chat/QuickReplyChips";
+import { EmojiPicker } from "@/components/chat/EmojiPicker";
 
 type ComposerProps = {
   onSend: (text: string) => void;
   disabled?: boolean;
+  onTypingChange?: (isTyping: boolean) => void;
 };
 
 const ATTACH_ITEMS = [
@@ -35,7 +35,7 @@ function formatDuration(seconds: number) {
   return `${mm}:${ss}`;
 }
 
-export function Composer({ onSend, disabled }: ComposerProps) {
+export function Composer({ onSend, disabled, onTypingChange }: ComposerProps) {
   const [text, setText] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
   const [showAttach, setShowAttach] = useState(false);
@@ -43,6 +43,36 @@ export function Composer({ onSend, disabled }: ComposerProps) {
   const [elapsed, setElapsed] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const typingTimerRef = useRef<number | null>(null);
+
+  const notifyTyping = () => {
+    if (!onTypingChange) return;
+    onTypingChange(true);
+    if (typingTimerRef.current) {
+      window.clearTimeout(typingTimerRef.current);
+    }
+    typingTimerRef.current = window.setTimeout(() => {
+      onTypingChange(false);
+      typingTimerRef.current = null;
+    }, 2000);
+  };
+
+  const clearTyping = () => {
+    if (typingTimerRef.current) {
+      window.clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = null;
+    }
+    onTypingChange?.(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (typingTimerRef.current) {
+        window.clearTimeout(typingTimerRef.current);
+      }
+      onTypingChange?.(false);
+    };
+  }, [onTypingChange]);
 
   useEffect(() => {
     if (!recording) return;
@@ -53,6 +83,7 @@ export function Composer({ onSend, disabled }: ComposerProps) {
   const submit = () => {
     const value = text.trim();
     if (!value || disabled) return;
+    clearTyping();
     onSend(value);
     setText("");
     setShowEmoji(false);
@@ -61,6 +92,7 @@ export function Composer({ onSend, disabled }: ComposerProps) {
   };
 
   const startRecording = () => {
+    notifyTyping();
     setElapsed(0);
     setRecording(true);
     setShowEmoji(false);
@@ -68,6 +100,7 @@ export function Composer({ onSend, disabled }: ComposerProps) {
   };
 
   const stopRecording = (send: boolean) => {
+    clearTyping();
     setRecording(false);
     if (send && elapsed > 0) {
       onSend(`🎙️ הודעה קולית (${formatDuration(elapsed)})`);
@@ -88,6 +121,30 @@ export function Composer({ onSend, disabled }: ComposerProps) {
       return;
     }
     onSend("📷 נשלחה תמונה מהמצלמה");
+  };
+
+  const handleInsertEmoji = (emoji: string) => {
+    const textarea = inputRef.current;
+    if (!textarea) {
+      setText((prev) => prev + emoji);
+      notifyTyping();
+      return;
+    }
+
+    const start = textarea.selectionStart ?? text.length;
+    const end = textarea.selectionEnd ?? text.length;
+    const nextText = text.slice(0, start) + emoji + text.slice(end);
+    setText(nextText);
+    notifyTyping();
+
+    // Preserve cursor position right after the inserted emoji and keep textarea focused
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        const nextPos = start + emoji.length;
+        inputRef.current.setSelectionRange(nextPos, nextPos);
+      }
+    }, 15);
   };
 
   const handleInsert = (template: string) => {
@@ -166,30 +223,8 @@ export function Composer({ onSend, disabled }: ComposerProps) {
         />
 
         {showEmoji ? (
-          <div className="wa-pop absolute bottom-full end-2 z-30 mb-2 w-[280px] rounded-xl border border-wa-divider bg-wa-panel p-3 shadow-lg">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs text-wa-meta">אימוג&apos;ים ומדבקות</span>
-              <button
-                type="button"
-                onClick={() => setShowEmoji(false)}
-                aria-label="סגירה"
-                className="text-wa-meta"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-            <div className="grid grid-cols-10 gap-1">
-              {EMOJIS.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => setText((value) => value + emoji)}
-                  className="rounded p-1 text-lg transition-colors hover:bg-wa-hover"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
+          <div className="absolute bottom-full start-2 sm:start-4 z-30 mb-2">
+            <EmojiPicker onSelect={handleInsertEmoji} onClose={() => setShowEmoji(false)} />
           </div>
         ) : null}
 
@@ -220,16 +255,27 @@ export function Composer({ onSend, disabled }: ComposerProps) {
                 setShowEmoji((value) => !value);
                 setShowAttach(false);
               }}
-              aria-label="אימוג'י"
-              className="rounded-full p-2 transition-colors hover:bg-wa-hover"
+              aria-label="בחירת אימוג'י"
+              title="אימוג'י"
+              className={cn(
+                "rounded-full p-2 transition-colors hover:bg-wa-hover",
+                showEmoji ? "text-wa-green bg-wa-hover" : "text-wa-meta",
+              )}
             >
               <Smile className="size-6" />
             </button>
             <button
               type="button"
-              onClick={() => setShowEmoji((value) => !value)}
-              aria-label="מדבקות"
-              className="hidden rounded-full p-2 transition-colors hover:bg-wa-hover sm:block"
+              onClick={() => {
+                setShowEmoji((value) => !value);
+                setShowAttach(false);
+              }}
+              aria-label="מדבקות וסמלים"
+              title="מדבקות וסמלים"
+              className={cn(
+                "hidden rounded-full p-2 transition-colors hover:bg-wa-hover sm:block",
+                showEmoji ? "text-wa-green bg-wa-hover" : "text-wa-meta",
+              )}
             >
               <Sticker className="size-6" />
             </button>
@@ -253,7 +299,14 @@ export function Composer({ onSend, disabled }: ComposerProps) {
             ref={inputRef}
             rows={1}
             value={text}
-            onChange={(event) => setText(event.target.value)}
+            onChange={(event) => {
+              setText(event.target.value);
+              if (event.target.value.trim()) {
+                notifyTyping();
+              } else {
+                clearTyping();
+              }
+            }}
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();

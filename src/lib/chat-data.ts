@@ -31,18 +31,22 @@ export type Conversation = {
   unread: number;
   muted?: boolean;
   kind: "all" | "group";
+  phone?: string;
+  isOfficial?: boolean;
 };
 
 export const CONVERSATIONS: Conversation[] = [
   {
     id: "noa",
     name: "נועה AI — ח. סבן חומרי בניין",
+    phone: "+972 50-886-1080",
     avatar: NOA_AVATAR,
     initials: "נ",
     preview: "ההזמנה נקלטה, שלחתי לנהג את הניווט 📥",
     time: "09:41",
     unread: 0,
     kind: "all",
+    isOfficial: true,
   },
   {
     id: "sidur",
@@ -113,6 +117,101 @@ export const INITIAL_MESSAGES: Message[] = [
     },
   },
 ];
+
+export const INITIAL_CONVERSATION_MESSAGES: Record<string, Message[]> = {
+  noa: INITIAL_MESSAGES,
+  sidur: [
+    {
+      id: "s1",
+      author: "noa",
+      text: "חכמת: בוקר טוב לכל הנהגים, יוצאים לחלוקה ראשונה מאזור תעשייה חולון 🚚",
+      time: "08:00",
+    },
+    {
+      id: "s2",
+      author: "noa",
+      text: "עלי: פריקה ראשונה בהאורגים הסתיימה, ממשיך לקבלן שארק",
+      time: "08:45",
+    },
+    {
+      id: "s3",
+      author: "noa",
+      text: "איציק זהבי: מחסן 30 סגור היום עד 12:00 עקב עבודות תשתית בחצר",
+      time: "09:12",
+    },
+    {
+      id: "s4",
+      author: "me",
+      text: "עודכן, נהגים שמובילים לשם ימתינו לאישור מול איציק",
+      time: "09:14",
+      status: "delivered",
+    },
+  ],
+  shark: [
+    {
+      id: "sh1",
+      author: "noa",
+      text: "בוקר טוב ראמי, צריך מכולה 12 קוב מחר בבוקר לשפינוזה",
+      time: "08:50",
+    },
+    {
+      id: "sh2",
+      author: "me",
+      text: "סגור שארק, רשמתי בסידור מול מחסן 30",
+      time: "08:55",
+      status: "read",
+    },
+    {
+      id: "sh3",
+      author: "me",
+      text: "נהג מתוזמן אצלך בין 09:00 ל-10:00 בבוקר",
+      time: "08:57",
+      status: "delivered",
+    },
+  ],
+  vered: [
+    {
+      id: "v1",
+      author: "noa",
+      text: "היי ראמי, שלחת את סיכום הפקדונות החודשי?",
+      time: "אתמול 16:30",
+    },
+    {
+      id: "v2",
+      author: "me",
+      text: "כן ורד, בדקתי מול נועה והדו״ח הועבר להנהלת חשבונות",
+      time: "אתמול 16:45",
+      status: "read",
+    },
+    {
+      id: "v3",
+      author: "noa",
+      text: "תודה! קיבלתי את החשבונית 👍",
+      time: "אתמול 17:00",
+    },
+  ],
+  lina: [
+    {
+      id: "l1",
+      author: "noa",
+      text: "שלום ראמי, מתי האספקה של הגבס ממחסן 1?",
+      time: "אתמול 14:15",
+    },
+    {
+      id: "l2",
+      author: "me",
+      text: "עלי בדרך אלייך עם המשאית",
+      time: "אתמול 14:30",
+      status: "read",
+    },
+    {
+      id: "l3",
+      author: "noa",
+      text: "אשלח את פרטי האתר בהמשך היום",
+      time: "אתמול 14:35",
+    },
+  ],
+};
 
 export const ACTION_LABELS: Record<ContainerAction, { emoji: string; label: string }> = {
   placement: { emoji: "📥", label: "הצבה" },

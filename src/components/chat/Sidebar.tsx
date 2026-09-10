@@ -1,8 +1,18 @@
 import { useMemo, useState } from "react";
-import { Search, MessageSquarePlus, MoreVertical, BellOff, Moon, Sun } from "lucide-react";
+import {
+  Search,
+  MessageSquarePlus,
+  MoreVertical,
+  BellOff,
+  Moon,
+  Sun,
+  Check,
+  CheckCheck,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { CONVERSATIONS, type Conversation } from "@/lib/chat-data";
+import { CONVERSATIONS, type Conversation, type Message } from "@/lib/chat-data";
+import type { TypingUser } from "@/lib/typing-events";
 
 type Tab = "all" | "unread" | "groups";
 
@@ -18,6 +28,8 @@ type SidebarProps = {
   isDark: boolean;
   onToggleTheme: () => void;
   className?: string;
+  typingState?: Record<string, TypingUser[]>;
+  conversationMessages?: Record<string, Message[]>;
 };
 
 function Avatar({ conversation }: { conversation: Conversation }) {
@@ -38,7 +50,15 @@ function Avatar({ conversation }: { conversation: Conversation }) {
   );
 }
 
-export function Sidebar({ activeId, onSelect, isDark, onToggleTheme, className }: SidebarProps) {
+export function Sidebar({
+  activeId,
+  onSelect,
+  isDark,
+  onToggleTheme,
+  className,
+  typingState = {},
+  conversationMessages = {},
+}: SidebarProps) {
   const [tab, setTab] = useState<Tab>("all");
   const [query, setQuery] = useState("");
 
@@ -117,45 +137,101 @@ export function Sidebar({ activeId, onSelect, isDark, onToggleTheme, className }
       </div>
 
       <div className="wa-scroll flex-1 overflow-y-auto">
-        {conversations.map((conversation) => (
-          <button
-            key={conversation.id}
-            type="button"
-            onClick={() => onSelect(conversation.id)}
-            className={cn(
-              "flex w-full items-center gap-3 px-3 py-3 text-start transition-colors",
-              conversation.id === activeId ? "bg-wa-hover" : "hover:bg-wa-hover",
-            )}
-          >
-            <Avatar conversation={conversation} />
-            <span className="min-w-0 flex-1 border-b border-wa-divider pb-3">
-              <span className="flex items-center justify-between gap-2">
-                <span className="truncate text-[15px] font-medium text-wa-bubble-text">
-                  {conversation.name}
+        {conversations.map((conversation) => {
+          const typers = typingState[conversation.id] || [];
+          const isTyping = typers.length > 0;
+          const typingLabel =
+            typers.length === 1
+              ? `${typers[0].userName} מקליד/ה...`
+              : `${typers.map((t) => t.userName).join(", ")} מקלידים...`;
+
+          const convMsgs = conversationMessages[conversation.id];
+          const lastMsg = convMsgs && convMsgs.length > 0 ? convMsgs[convMsgs.length - 1] : null;
+          const previewText = lastMsg
+            ? lastMsg.text ||
+              (lastMsg.card
+                ? `${lastMsg.card.title} - ${lastMsg.card.customer}`
+                : conversation.preview)
+            : conversation.preview;
+          const displayTime = lastMsg ? lastMsg.time : conversation.time;
+          const isOut = lastMsg?.author === "me";
+          const lastStatus = isOut ? lastMsg?.status : null;
+
+          return (
+            <button
+              key={conversation.id}
+              type="button"
+              onClick={() => onSelect(conversation.id)}
+              className={cn(
+                "flex w-full items-center gap-3 px-3 py-3 text-start transition-colors",
+                conversation.id === activeId ? "bg-wa-hover" : "hover:bg-wa-hover",
+              )}
+            >
+              <Avatar conversation={conversation} />
+              <span className="min-w-0 flex-1 border-b border-wa-divider pb-3">
+                <span className="flex items-center justify-between gap-2">
+                  <span className="truncate text-[15px] font-medium text-wa-bubble-text">
+                    {conversation.name}
+                  </span>
+                  <span
+                    className={cn(
+                      "shrink-0 text-xs",
+                      isTyping
+                        ? "text-wa-green font-medium"
+                        : conversation.unread > 0
+                          ? "text-wa-badge"
+                          : "text-wa-meta",
+                    )}
+                  >
+                    {isTyping ? "מקליד/ה" : displayTime}
+                  </span>
                 </span>
-                <span
-                  className={cn(
-                    "shrink-0 text-xs",
-                    conversation.unread > 0 ? "text-wa-badge" : "text-wa-meta",
-                  )}
-                >
-                  {conversation.time}
-                </span>
-              </span>
-              <span className="mt-1 flex items-center justify-between gap-2">
-                <span className="truncate text-[13px] text-wa-meta">{conversation.preview}</span>
-                <span className="flex shrink-0 items-center gap-1.5">
-                  {conversation.muted ? <BellOff className="size-3.5 text-wa-meta" /> : null}
-                  {conversation.unread > 0 ? (
-                    <span className="flex min-w-5 items-center justify-center rounded-full bg-wa-badge px-1.5 text-[11px] font-semibold text-wa-shell">
-                      {conversation.unread}
+                <span className="mt-1 flex items-center justify-between gap-2">
+                  {isTyping ? (
+                    <span className="flex items-center gap-1.5 truncate text-[13px] font-medium text-wa-green">
+                      <span className="truncate">{typingLabel}</span>
+                      <span className="inline-flex items-center gap-0.5">
+                        <span
+                          className="size-1 rounded-full bg-wa-green animate-bounce"
+                          style={{ animationDelay: "0ms" }}
+                        />
+                        <span
+                          className="size-1 rounded-full bg-wa-green animate-bounce"
+                          style={{ animationDelay: "150ms" }}
+                        />
+                        <span
+                          className="size-1 rounded-full bg-wa-green animate-bounce"
+                          style={{ animationDelay: "300ms" }}
+                        />
+                      </span>
                     </span>
-                  ) : null}
+                  ) : (
+                    <span className="flex min-w-0 items-center gap-1 truncate text-[13px] text-wa-meta">
+                      {lastStatus === "sent" ? (
+                        <Check className="size-3.5 shrink-0 stroke-[2.2] text-wa-meta" />
+                      ) : null}
+                      {lastStatus === "delivered" ? (
+                        <CheckCheck className="size-3.5 shrink-0 stroke-[2.2] text-wa-meta" />
+                      ) : null}
+                      {lastStatus === "read" ? (
+                        <CheckCheck className="size-3.5 shrink-0 stroke-[2.4] text-wa-tick" />
+                      ) : null}
+                      <span className="truncate">{previewText}</span>
+                    </span>
+                  )}
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    {conversation.muted ? <BellOff className="size-3.5 text-wa-meta" /> : null}
+                    {conversation.unread > 0 && !isTyping ? (
+                      <span className="flex min-w-5 items-center justify-center rounded-full bg-wa-badge px-1.5 text-[11px] font-semibold text-wa-shell">
+                        {conversation.unread}
+                      </span>
+                    ) : null}
+                  </span>
                 </span>
               </span>
-            </span>
-          </button>
-        ))}
+            </button>
+          );
+        })}
         {conversations.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-wa-meta">לא נמצאו צ&apos;אטים</p>
         ) : null}

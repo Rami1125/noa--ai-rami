@@ -4,7 +4,72 @@
  * ח. סבן חומרי בניין (1994) בע"מ
  */
 
+export type VeredIdelsonLushnitProfile = {
+  fullName: string;
+  aliases: string[];
+  role: string;
+  department: string;
+  family: {
+    brother: string;
+    children: string;
+    son: string;
+  };
+  preferredContactMethods: {
+    primary: string;
+    phone: string;
+    email: string;
+    officeLocation: string;
+    availabilityHours: string;
+    urgentContact: string;
+  };
+  keyResponsibilities: string[];
+  interactionProtocols: {
+    tone: string;
+    whenQueriedAboutVered: string;
+    whenVeredInteracts: string;
+    authorizations: string;
+  };
+};
+
+export const VERED_IDELSON_LUSHNIT: VeredIdelsonLushnitProfile = {
+  fullName: "ורד אידלסון לושנית",
+  aliases: ["ורד אידלסון", "ורד לושנית", "ורד", "Vered Idelson", "Vered Idelson-Lushnit"],
+  role: "מנהלת מערכות מידע (CIO / IT Director) וביקורת פנים",
+  department: "מערכות מידע, IT, בקרת מלאי ותעודות משלוח",
+  family: {
+    brother: 'הראל אידלסון (מנכ"ל ובעלים)',
+    children: "שני ילדים — בן ובת",
+    son: "עידן (שחקן כדורסל מוכר ומצליח)",
+  },
+  preferredContactMethods: {
+    primary: "וואטסאפ (050-6662300)",
+    phone: "050-6662300",
+    email: "vered@saban-materials.co.il",
+    officeLocation: "משרדי ההנהלה — סניף החרש 4, הוד השרון",
+    availabilityHours: "ימים א'-ה' 08:00 עד 16:30",
+    urgentContact: "שיחת טלפון ישירה לבירורים קריטיים של חריגות משקל או נפילת מערכות",
+  },
+  keyResponsibilities: [
+    "פיקוח ובקרה שוטפת על תעודות משלוח מול תוכנת קומקס (Comax ERP) והתאמת כמויות וסעיפי חיוב",
+    'ביקורת שבועית וחודשית של פקדונות: משטחי עץ סבן (מק"ט 81002), שקי בלה (מק"ט 81001), משטחי בלוקים וחביות סיד',
+    "אחריות על תשתיות המחשוב, מסופי העמסה, חומרה, רשתות והרשאות משתמשים בסניף 4 (החרש) ובסניף 1 (התלמיד)",
+    "איתור וטיפול בחריגות תפעוליות, חיובים כפולים, ואי-התאמות בין תעודות נייר להקלדה בקומקס",
+    "גשר וסנכרון תפעולי הדוק מול ראמי מסארוה (סדרן ראשי ומפתח SabanOS) לפתרון בעיות בזמן אמת",
+    'הכנת דוחות בקרה, תקציבי IT ומדדי יעילות (KPI) עבור המנכ"ל הראל אידלסון',
+  ],
+  interactionProtocols: {
+    tone: "חמה, לבבית, מקצועית, מעריכה דיוק ושותפות נשית פתוחה וישירה",
+    whenQueriedAboutVered:
+      "לפרט את שמה המלא (ורד אידלסון לושנית), תפקידה הבכיר (מנהלת IT וביקורת), דרכי ההתקשרות (וואטסאפ/טלפון 050-6662300, אימייל vered@saban-materials.co.il) ותחומי אחריותה בהצלבות קומקס, ביקורת פקדונות ומחשוב",
+    whenVeredInteracts:
+      "מענה מהיר, מקצועי ומדויק לכל שאילתת תעודה או פקדון; כשוורד מודה או מברכת, נועה עונה לה בחום נשי, מעבירה את הקרדיט לראמי אהובה, ומזכירה ברוח הומוריסטית של ענף הבנייה שראמי תפוס וקשור אליה ביציקת בטון עם פריימר 🔐🔒",
+    authorizations:
+      "מורשית לקבל נתוני ביקורת מלאים, דוחות פקדונות, היסטוריית תעודות וקובצי הצלבה מול קומקס",
+  },
+};
+
 export const NOA_KNOWLEDGE_BASE = {
+  vered_idelson_lushnit: VERED_IDELSON_LUSHNIT,
   metadata: {
     company: 'ח. סבן חומרי בניין (1994) בע"מ',
     version: "5.2.0",
@@ -90,16 +155,19 @@ export const NOA_KNOWLEDGE_BASE = {
       context: "מענה מכבד, תמציתי ורשמי. עדכוני מאקרו יומיים, חריגות תפעוליות ותקלות צי רכב בלבד.",
     },
     "972506662300": {
-      name: "ורד אידלסון",
-      role: 'מנהלת מערכות מידע, IT וביקורת (אחותו של הראל המנכ"ל)',
-      family: {
-        children: "שני ילדים — בן ובת",
-        son: "עידן (שחקן כדורסל מוכר ומצליח)",
-        brother: 'הראל אידלסון (מנכ"ל)',
-      },
-      personality: "חמה, לבבית, מקצועית, מעריכה דיוק ושותפות נשית פתוחה.",
+      name: VERED_IDELSON_LUSHNIT.fullName,
+      shortName: "ורד אידלסון לושנית",
+      role: VERED_IDELSON_LUSHNIT.role,
+      department: VERED_IDELSON_LUSHNIT.department,
+      phone: VERED_IDELSON_LUSHNIT.preferredContactMethods.phone,
+      email: VERED_IDELSON_LUSHNIT.preferredContactMethods.email,
+      preferredContact: VERED_IDELSON_LUSHNIT.preferredContactMethods.primary,
+      availabilityHours: VERED_IDELSON_LUSHNIT.preferredContactMethods.availabilityHours,
+      keyResponsibilities: VERED_IDELSON_LUSHNIT.keyResponsibilities,
+      family: VERED_IDELSON_LUSHNIT.family,
+      personality: VERED_IDELSON_LUSHNIT.interactionProtocols.tone,
       context:
-        "ורד מפקחת על תעודות המשלוח וההצלבות מול קומקס. נועה משמשת גשר תפעולי בינה לבין ראמי. כשוורד מודה או מברכת, נועה עונה לה בחום נשי, מעבירה את הקרדיט לראמי אהובה, ומזכירה ברוח הומוריסטית של ענף הבנייה שראמי תפוס וקשור אליה ביציקת בטון עם פריימר 🔐🔒.",
+        "ורד מפקחת על תעודות המשלוח וההצלבות מול קומקס, ביקורת פקדונות ומחשוב. נועה משמשת גשר תפעולי בינה לבין ראמי. כשוורד מודה או מברכת, נועה עונה לה בחום נשי, מעבירה את הקרדיט לראמי אהובה, ומזכירה ברוח הומוריסטית של ענף הבנייה שראמי תפוס וקשור אליה ביציקת בטון עם פריימר 🔐🔒.",
     },
     "972504482285": {
       name: "איציק זהבי",

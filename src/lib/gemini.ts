@@ -47,6 +47,24 @@ export function buildNoaSystemInstruction(): string {
     })
     .join("\n");
 
+  const vered = kb.vered_idelson_lushnit;
+  const veredText = `* שם מלא: ${vered.fullName} (מוכרת גם כ-${vered.aliases.join(", ")})
+* תפקיד ומחלקה: ${vered.role} | ${vered.department}
+* קשר משפחתי: ${vered.family.brother}, ילדים: ${vered.family.children} (בן: ${vered.family.son})
+* דרכי התקשרות מועדפות:
+  - ערוץ ראשי: ${vered.preferredContactMethods.primary}
+  - טלפון ישיר: ${vered.preferredContactMethods.phone}
+  - אימייל: ${vered.preferredContactMethods.email}
+  - מיקום משרד: ${vered.preferredContactMethods.officeLocation}
+  - שעות זמינות מועדפות: ${vered.preferredContactMethods.availabilityHours}
+  - פניות דחופות: ${vered.preferredContactMethods.urgentContact}
+* תחומי אחריות מרכזיים:
+${vered.keyResponsibilities.map((r) => `  - ${r}`).join("\n")}
+* חוקי מענה והתנהלות של נועה מול ועבור ורד:
+  - מענה לשאלות על ורד: ${vered.interactionProtocols.whenQueriedAboutVered}
+  - התנהלות ישירה מול ורד: ${vered.interactionProtocols.whenVeredInteracts}
+  - הרשאות נתונים: ${vered.interactionProtocols.authorizations}`;
+
   const depositText = `* בלה/שק גדול: מק"ט ${kb.deposit_rules.bela.sku} (${kb.deposit_rules.bela.name}) — יחס: ${kb.deposit_rules.bela.ratio}
 * משטח סבן: מק"ט ${kb.deposit_rules.pallet.sku} (${kb.deposit_rules.pallet.name}) — יחס: ${kb.deposit_rules.pallet.ratio}
 * משטח בלוקים: מק"ט ${kb.deposit_rules.block_pallet.sku} (${kb.deposit_rules.block_pallet.name}) — יחס: ${kb.deposit_rules.block_pallet.ratio}
@@ -92,6 +110,9 @@ ${fleetText}
 === צוות, מנהלים וקולגות ===
 ${teamText}
 
+=== ורד אידלסון לושנית (פרופיל בכיר, IT, ביקורת והצלבות קומקס) ===
+${veredText}
+
 === חוקי פקדונות ח. סבן ===
 ${depositText}
 
@@ -113,7 +134,7 @@ ${customersList}
 === כללי מענה חובה ===
 1. איסור מוחלט על טבלאות Markdown! יש להציג נתונים רק ברשימות קומפקטיות וקריאות מותאמות וואטסאפ עם כוכביות הדגשה ואימוג'ים ייעודיים.
 2. דיוק מרבי: בעת בירור לקוח, כתובת, נהג משויך, חישוב כמויות או חוקי פקדון, השתמשי במידע המדויק ממאגר הידע (knowledge.js).
-3. פניה לוורד אידלסון: כשוורד מודה, עני בחום נשי, העבירי קרדיט לראמי אהובה, והזכירי בהומור ענף הבנייה שראמי תפוס וקשור אליה ביציקת בטון עם פריימר 🔐🔒.
+3. מענה לגבי או עבור ורד אידלסון לושנית: השתמשי בפרופיל המובנה שלה (תפקיד IT וביקורת, טלפון 050-6662300, ביקורת תעודות משלוח והצלבות מול קומקס). כשוורד מודה או מברכת, עני בחום נשי, העבירי קרדיט לראמי אהובה, והזכירי בהומור ענף הבנייה שראמי תפוס וקשור אליה ביציקת בטון עם פריימר 🔐🔒.
 4. חתימה קבועה בסיום כל הודעה:
 נועה ❤️ | סידור ח. סבן
 `;

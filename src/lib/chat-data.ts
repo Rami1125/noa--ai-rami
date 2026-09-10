@@ -68,9 +68,10 @@ export const CONVERSATIONS: Conversation[] = [
   },
   {
     id: "vered",
-    name: "ורד אידלסון",
+    name: "ורד אידלסון לושנית",
+    phone: "050-666-2300",
     initials: "ו",
-    preview: "תודה! קיבלתי את החשבונית",
+    preview: "תודה! קיבלתי את תעודות המשלוח וההצלבה",
     time: "אתמול",
     unread: 0,
     kind: "all",

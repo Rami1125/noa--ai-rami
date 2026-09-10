@@ -198,6 +198,15 @@
   background-repeat: repeat;
 }
 
+/* Saban blueprint grid pattern */
+@utility wa-blueprint {
+  background-color: var(--wa-chat-bg);
+  background-image:
+    linear-gradient(var(--wa-divider) 1px, transparent 1px),
+    linear-gradient(90deg, var(--wa-divider) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
 @utility wa-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--wa-divider) transparent;

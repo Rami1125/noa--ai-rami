@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/chat/Sidebar";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { MessageBubble, TypingIndicator } from "@/components/chat/MessageBubble";
 import { Composer } from "@/components/chat/Composer";
+import { WallpaperModal } from "@/components/chat/WallpaperModal";
 import { CONVERSATIONS, INITIAL_MESSAGES, type Message } from "@/lib/chat-data";
 import { sendMessageToMake } from "@/lib/chat.functions";
 import { cn } from "@/lib/utils";
@@ -55,8 +56,45 @@ function ChatPage() {
   const [activeId, setActiveId] = useState("noa");
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
   const [isDark, setIsDark] = useState(true);
+  const [wallpaper, setWallpaper] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("saban_chat_wallpaper") || "default";
+    }
+    return "default";
+  });
+  const [showWallpaperModal, setShowWallpaperModal] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const send = useServerFn(sendMessageToMake);
+
+  const handleSelectWallpaper = (newWp: string) => {
+    setWallpaper(newWp);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("saban_chat_wallpaper", newWp);
+    }
+  };
+
+  const getWallpaperStyle = (): { className: string; style?: React.CSSProperties } => {
+    if (wallpaper === "default") {
+      return { className: "wa-doodle" };
+    }
+    if (wallpaper === "blueprint-grid") {
+      return { className: "wa-blueprint" };
+    }
+    if (wallpaper === "solid-emerald") {
+      return { className: "bg-wa-chat-bg", style: { backgroundImage: "none" } };
+    }
+    return {
+      className: "bg-wa-chat-bg",
+      style: {
+        backgroundImage: `url("${wallpaper}")`,
+        backgroundRepeat: "repeat",
+        backgroundSize: "auto",
+        backgroundPosition: "center",
+      },
+    };
+  };
+
+  const wpStyleConfig = getWallpaperStyle();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
@@ -151,11 +189,16 @@ function ChatPage() {
             title={activeConversation.name}
             status={activeId === "noa" ? "מחובר/ת כעת" : "נראתה לאחרונה היום"}
             onBack={() => setMobileChatOpen(false)}
+            onOpenWallpaper={() => setShowWallpaperModal(true)}
           />
 
           <div
             ref={scrollRef}
-            className="wa-doodle wa-scroll flex-1 overflow-y-auto px-3 py-4 sm:px-8"
+            className={cn(
+              "wa-scroll flex-1 overflow-y-auto px-3 py-4 sm:px-8",
+              wpStyleConfig.className,
+            )}
+            style={wpStyleConfig.style}
           >
             <div className="mx-auto flex max-w-4xl flex-col gap-2">
               <p className="mx-auto mb-2 flex items-center gap-1.5 rounded-lg bg-wa-panel/80 px-3 py-1.5 text-center text-[11px] text-wa-meta backdrop-blur">
@@ -174,6 +217,13 @@ function ChatPage() {
 
           <Composer onSend={handleSend} disabled={typing} />
         </main>
+
+        <WallpaperModal
+          isOpen={showWallpaperModal}
+          onClose={() => setShowWallpaperModal(false)}
+          currentWallpaper={wallpaper}
+          onSelectWallpaper={handleSelectWallpaper}
+        />
       </div>
     </div>
   );

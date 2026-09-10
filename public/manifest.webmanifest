@@ -1,0 +1,27 @@
+{
+  "name": "נועה AI — ח. סבן חומרי בניין בע\"מ",
+  "short_name": "נועה AI",
+  "description": "מוקד התיאום החכם של ח. סבן חומרי בניין — ניהול הזמנות מכולות ומשימות בצ'אט.",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B141A",
+  "theme_color": "#202C33",
+  "icons": [
+    {
+      "src": "https://i.ibb.co/whtMgBNC/Gemini-Generated-Image-2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://i.ibb.co/whtMgBNC/Gemini-Generated-Image-2.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

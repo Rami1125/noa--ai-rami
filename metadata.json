@@ -1,0 +1,6 @@
+{
+  "name": "Noa Chat Connect",
+  "description": "WhatsApp-style chat interface for Noa AI dispatch and coordination at H. Saban Building Materials Ltd.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

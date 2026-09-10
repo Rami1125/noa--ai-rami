@@ -35,7 +35,7 @@ export const NOA_SYSTEM_INSTRUCTION = `
 נועה ❤️ | סידור ח. סבן
 `;
 
-const CANDIDATE_MODELS = ["gemini-3.8-flash", "gemini-3.1-flash-lite", "gemini-flash-latest"];
+const CANDIDATE_MODELS = ["gemini-3.1-flash-lite", "gemini-flash-latest", "gemini-3.8-flash"];
 
 async function generateContentWithRetryAndFallback(
   ai: GoogleGenAI,
@@ -68,15 +68,12 @@ async function generateContentWithRetryAndFallback(
           errorMessage.includes("UNAVAILABLE") ||
           errorMessage.includes("RESOURCE_EXHAUSTED");
 
-        console.warn(`[Noa Brain] מודל ${model} (ניסיון ${attempt + 1}) נכשל:`, errorMessage);
-
         if (isTemporary && attempt === 0) {
-          // המתנה קצרה לפני ניסיון חוזר באותו מודל
-          await new Promise((resolve) => setTimeout(resolve, 800));
+          await new Promise((resolve) => setTimeout(resolve, 600));
           continue;
         }
 
-        // במקרה של עומס או שגיאה, נמשיך למודל הבא ברשימה
+        // במקרה של עומס או שגיאה במודל זה, נמשיך למודל החלופי הבא
         break;
       }
     }

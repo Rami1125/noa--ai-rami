@@ -15,6 +15,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { EMOJIS } from "@/lib/chat-data";
+import { QuickReplyChips } from "@/components/chat/QuickReplyChips";
 
 type ComposerProps = {
   onSend: (text: string) => void;
@@ -89,6 +90,24 @@ export function Composer({ onSend, disabled }: ComposerProps) {
     onSend("📷 נשלחה תמונה מהמצלמה");
   };
 
+  const handleInsert = (template: string) => {
+    setText((prev) => {
+      if (!prev.trim()) return template;
+      return `${prev} ${template}`;
+    });
+    setShowEmoji(false);
+    setShowAttach(false);
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.setSelectionRange(
+          inputRef.current.value.length,
+          inputRef.current.value.length,
+        );
+      }
+    }, 40);
+  };
+
   if (recording) {
     return (
       <div className="flex items-center gap-3 bg-wa-topbar px-3 py-2.5">
@@ -130,137 +149,142 @@ export function Composer({ onSend, disabled }: ComposerProps) {
   }
 
   return (
-    <div className="relative bg-wa-topbar px-2 py-2 sm:px-3">
-      <input
-        ref={fileRef}
-        type="file"
-        className="hidden"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) onSend(`📎 צורף קובץ: ${file.name}`);
-          event.target.value = "";
-        }}
-      />
+    <div className="relative flex flex-col bg-wa-topbar border-t border-wa-divider">
+      {/* Clickable quick-reply chips above the message input field */}
+      <QuickReplyChips onSend={onSend} onInsert={handleInsert} disabled={disabled} />
 
-      {showEmoji ? (
-        <div className="wa-pop absolute bottom-full end-2 mb-2 w-[280px] rounded-xl border border-wa-divider bg-wa-panel p-3 shadow-lg">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs text-wa-meta">אימוג&apos;ים ומדבקות</span>
-            <button
-              type="button"
-              onClick={() => setShowEmoji(false)}
-              aria-label="סגירה"
-              className="text-wa-meta"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-          <div className="grid grid-cols-10 gap-1">
-            {EMOJIS.map((emoji) => (
+      <div className="relative px-2 py-2 sm:px-3">
+        <input
+          ref={fileRef}
+          type="file"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) onSend(`📎 צורף קובץ: ${file.name}`);
+            event.target.value = "";
+          }}
+        />
+
+        {showEmoji ? (
+          <div className="wa-pop absolute bottom-full end-2 z-30 mb-2 w-[280px] rounded-xl border border-wa-divider bg-wa-panel p-3 shadow-lg">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs text-wa-meta">אימוג&apos;ים ומדבקות</span>
               <button
-                key={emoji}
                 type="button"
-                onClick={() => setText((value) => value + emoji)}
-                className="rounded p-1 text-lg transition-colors hover:bg-wa-hover"
+                onClick={() => setShowEmoji(false)}
+                aria-label="סגירה"
+                className="text-wa-meta"
               >
-                {emoji}
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-10 gap-1">
+              {EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => setText((value) => value + emoji)}
+                  className="rounded p-1 text-lg transition-colors hover:bg-wa-hover"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {showAttach ? (
+          <div className="wa-pop absolute bottom-full start-2 z-30 mb-2 w-56 overflow-hidden rounded-xl border border-wa-divider bg-wa-panel shadow-lg">
+            {ATTACH_ITEMS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleAttach(item.id)}
+                className="flex w-full items-center gap-3 px-4 py-3 text-start transition-colors hover:bg-wa-hover"
+              >
+                <item.icon className="size-5 text-wa-green" />
+                <span>
+                  <span className="block text-sm text-wa-bubble-text">{item.label}</span>
+                  <span className="block text-xs text-wa-meta">{item.hint}</span>
+                </span>
               </button>
             ))}
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      {showAttach ? (
-        <div className="wa-pop absolute bottom-full start-2 mb-2 w-56 overflow-hidden rounded-xl border border-wa-divider bg-wa-panel shadow-lg">
-          {ATTACH_ITEMS.map((item) => (
+        <div className="flex items-end gap-1.5">
+          <div className="flex items-center text-wa-meta">
             <button
-              key={item.id}
               type="button"
-              onClick={() => handleAttach(item.id)}
-              className="flex w-full items-center gap-3 px-4 py-3 text-start transition-colors hover:bg-wa-hover"
+              onClick={() => {
+                setShowEmoji((value) => !value);
+                setShowAttach(false);
+              }}
+              aria-label="אימוג'י"
+              className="rounded-full p-2 transition-colors hover:bg-wa-hover"
             >
-              <item.icon className="size-5 text-wa-green" />
-              <span>
-                <span className="block text-sm text-wa-bubble-text">{item.label}</span>
-                <span className="block text-xs text-wa-meta">{item.hint}</span>
-              </span>
+              <Smile className="size-6" />
             </button>
-          ))}
-        </div>
-      ) : null}
+            <button
+              type="button"
+              onClick={() => setShowEmoji((value) => !value)}
+              aria-label="מדבקות"
+              className="hidden rounded-full p-2 transition-colors hover:bg-wa-hover sm:block"
+            >
+              <Sticker className="size-6" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowAttach((value) => !value);
+                setShowEmoji(false);
+              }}
+              aria-label="צירוף קובץ"
+              className={cn(
+                "rounded-full p-2 transition-transform hover:bg-wa-hover",
+                showAttach && "rotate-45",
+              )}
+            >
+              <Paperclip className="size-6" />
+            </button>
+          </div>
 
-      <div className="flex items-end gap-1.5">
-        <div className="flex items-center text-wa-meta">
-          <button
-            type="button"
-            onClick={() => {
-              setShowEmoji((value) => !value);
-              setShowAttach(false);
+          <textarea
+            ref={inputRef}
+            rows={1}
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                submit();
+              }
             }}
-            aria-label="אימוג'י"
-            className="rounded-full p-2 transition-colors hover:bg-wa-hover"
-          >
-            <Smile className="size-6" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowEmoji((value) => !value)}
-            aria-label="מדבקות"
-            className="hidden rounded-full p-2 transition-colors hover:bg-wa-hover sm:block"
-          >
-            <Sticker className="size-6" />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setShowAttach((value) => !value);
-              setShowEmoji(false);
-            }}
-            aria-label="צירוף קובץ"
-            className={cn(
-              "rounded-full p-2 transition-transform hover:bg-wa-hover",
-              showAttach && "rotate-45",
-            )}
-          >
-            <Paperclip className="size-6" />
-          </button>
+            placeholder="הקלד/י הודעה"
+            className="wa-scroll max-h-32 min-h-11 flex-1 resize-none rounded-2xl bg-wa-panel px-4 py-2.5 text-[15px] text-wa-bubble-text outline-none placeholder:text-wa-meta"
+          />
+
+          {text.trim() ? (
+            <button
+              type="button"
+              onClick={submit}
+              disabled={disabled}
+              aria-label="שליחה"
+              className="flex size-11 shrink-0 items-center justify-center rounded-full bg-wa-green text-wa-shell transition-colors hover:bg-wa-green-strong disabled:opacity-60"
+            >
+              <Send className="size-5 rtl:-scale-x-100" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={startRecording}
+              aria-label="הקלטת הודעה קולית"
+              className="flex size-11 shrink-0 items-center justify-center rounded-full bg-wa-green text-wa-shell transition-colors hover:bg-wa-green-strong"
+            >
+              <Mic className="size-5" />
+            </button>
+          )}
         </div>
-
-        <textarea
-          ref={inputRef}
-          rows={1}
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              submit();
-            }
-          }}
-          placeholder="הקלד/י הודעה"
-          className="wa-scroll max-h-32 min-h-11 flex-1 resize-none rounded-2xl bg-wa-panel px-4 py-2.5 text-[15px] text-wa-bubble-text outline-none placeholder:text-wa-meta"
-        />
-
-        {text.trim() ? (
-          <button
-            type="button"
-            onClick={submit}
-            disabled={disabled}
-            aria-label="שליחה"
-            className="flex size-11 shrink-0 items-center justify-center rounded-full bg-wa-green text-wa-shell transition-colors hover:bg-wa-green-strong disabled:opacity-60"
-          >
-            <Send className="size-5 rtl:-scale-x-100" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={startRecording}
-            aria-label="הקלטת הודעה קולית"
-            className="flex size-11 shrink-0 items-center justify-center rounded-full bg-wa-green text-wa-shell transition-colors hover:bg-wa-green-strong"
-          >
-            <Mic className="size-5" />
-          </button>
-        )}
       </div>
     </div>
   );

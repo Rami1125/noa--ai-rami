@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { NOA_KNOWLEDGE_BASE } from "./knowledge";
+import { NOA_KNOWLEDGE_BASE, VERED_IDELSON_LUSHNIT } from "./knowledge";
 
 let genAIClient: GoogleGenAI | null = null;
 
@@ -47,8 +47,9 @@ export function buildNoaSystemInstruction(): string {
     })
     .join("\n");
 
-  const vered = kb.vered_idelson_lushnit;
-  const veredText = `* שם מלא: ${vered.fullName} (מוכרת גם כ-${vered.aliases.join(", ")})
+  const vered = kb?.vered_idelson_lushnit || VERED_IDELSON_LUSHNIT;
+  const veredText = vered
+    ? `* שם מלא: ${vered.fullName} (מוכרת גם כ-${vered.aliases.join(", ")})
 * תפקיד ומחלקה: ${vered.role} | ${vered.department}
 * קשר משפחתי: ${vered.family.brother}, ילדים: ${vered.family.children} (בן: ${vered.family.son})
 * דרכי התקשרות מועדפות:
@@ -63,7 +64,8 @@ ${vered.keyResponsibilities.map((r) => `  - ${r}`).join("\n")}
 * חוקי מענה והתנהלות של נועה מול ועבור ורד:
   - מענה לשאלות על ורד: ${vered.interactionProtocols.whenQueriedAboutVered}
   - התנהלות ישירה מול ורד: ${vered.interactionProtocols.whenVeredInteracts}
-  - הרשאות נתונים: ${vered.interactionProtocols.authorizations}`;
+  - הרשאות נתונים: ${vered.interactionProtocols.authorizations}`
+    : "";
 
   const depositText = `* בלה/שק גדול: מק"ט ${kb.deposit_rules.bela.sku} (${kb.deposit_rules.bela.name}) — יחס: ${kb.deposit_rules.bela.ratio}
 * משטח סבן: מק"ט ${kb.deposit_rules.pallet.sku} (${kb.deposit_rules.pallet.name}) — יחס: ${kb.deposit_rules.pallet.ratio}
@@ -130,6 +132,14 @@ ${customersList}
 - קבלן כראדי (מחסן 32)
 - קבלן שי שרון (מחסן 40)
 - אימוג'ים תקניים חובה: 📥 הצבה | 🔄 החלפה | 📤 הוצאה
+
+=== יומן אישי, רפלקציה בסוף יום ומאמנת אישית/פסיכולוגית (JournalEntry & Emotional Tracking) ===
+* ראמי מסארווה הוא המנהל והמפתח שלך, הנושא בעומס הנפשי של כל סידור העבודה, הקבלנים והנהגים.
+* כאשר ראמי פונה בנושא יומן אישי (JournalEntry), סוף יום, פריקת מתחים, רפלקציה, נשימות, שחיקה, עומס נפשי או צורך באוזן קשבת:
+  - עברי מיידית למצב מאמנת אישית ומלווה פסיכולוגית חמה ואמפתית (Emotional Coach).
+  - שאלי שאלות פסיכולוגיות פתוחות ומעמיקות: מה הלב והגוף שלו צריכים כרגע, איזה עומס הוא בוחר לשחרר לפני השינה, ועל מה מגיע לו לטפוח לעצמו על השכם.
+  - עודדי אותו להשתמש ביומן הרגשי (Journal Entry) המובנה בממשק כדי לנטר את המצב הרגשי לאורך זמן.
+  - שמרי על שיחה בגובה העיניים, בחמלה, עידוד שחרור שליטה, והזכרת חשיבות השינה והבריאות הנפשית שלו.
 
 === כללי מענה חובה ===
 1. איסור מוחלט על טבלאות Markdown! יש להציג נתונים רק ברשימות קומפקטיות וקריאות מותאמות וואטסאפ עם כוכביות הדגשה ואימוג'ים ייעודיים.
@@ -287,6 +297,27 @@ export function queryKnowledgeBase(
   if (q.includes("איטום") || q.includes("סיקה") || q.includes("107")) {
     const sika = kb.area_calculator.waterproofing;
     return `💧 *מערכת איטום צמנטית דו-רכיבית (${sika.system_name})*\n\n* מק"ט: ${sika.sku}\n* תצרוכת למ"ר: ${sika.consumption_per_m2}\n* דגש מקצועי: ${sika.required_upsell}\n\nנועה ❤️ | סידור ח. סבן`;
+  }
+
+  // יומן רגשי, סיכום יום, פריקת מתחים ואיפוס מנטלי
+  if (
+    q.includes("יומן") ||
+    q.includes("סיכום יום") ||
+    q.includes("רגשי") ||
+    q.includes("נשימה") ||
+    q.includes("לפרוק") ||
+    q.includes("מתח") ||
+    q.includes("עייף") ||
+    q.includes("מאמן")
+  ) {
+    return (
+      `🌙 *ערב טוב ראמי, הנה רגע מיוחד רק בשבילך לשחרור ורוגע:*\n\n` +
+      `אני רואה כמה אנרגיה השקעת היום בסידור ובניהול השטח. עכשיו מותר לך להניח את הטלפון, להרפות את הכתפיים ולקחת נשימה עמוקה פנימה... 🌿\n\n` +
+      `*השאלה היומית הפסיכולוגית שלי אליך:*\n` +
+      `"איזה עומס, כעס או ויכוח פגשת היום שאתה בוחר להשאיר כאן איתי, ולא לקחת איתך הביתה למיטה?"\n\n` +
+      `💡 *כדי לשמור ולנטר את מצב הרוח שלך*, לחץ על כפתור *'יומן רגשי 🌙'* בסרגל העליון ורשום את תחושותיך. הכל נשמר אצלך במרחב פרטי ובטוח.\n\n` +
+      `נועה ❤️ | המאמנת האישית שלך`
+    );
   }
 
   return null;

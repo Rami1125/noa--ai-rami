@@ -10,6 +10,7 @@ import {
   Smile,
   Sticker,
   Trash2,
+  Moon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -20,9 +21,11 @@ type ComposerProps = {
   onSend: (text: string) => void;
   disabled?: boolean;
   onTypingChange?: (isTyping: boolean) => void;
+  onOpenJournal?: () => void;
 };
 
 const ATTACH_ITEMS = [
+  { id: "journal", label: "יומן רגשי", hint: "סיכום יום עם נועה 🌙", icon: Moon },
   { id: "document", label: "מסמך", hint: "צירוף PDF", icon: FileText },
   { id: "camera", label: "מצלמה", hint: "צילום עכשיו", icon: Camera },
   { id: "gallery", label: "גלריה", hint: "תמונות וסרטונים", icon: ImageIcon },
@@ -35,7 +38,7 @@ function formatDuration(seconds: number) {
   return `${mm}:${ss}`;
 }
 
-export function Composer({ onSend, disabled, onTypingChange }: ComposerProps) {
+export function Composer({ onSend, disabled, onTypingChange, onOpenJournal }: ComposerProps) {
   const [text, setText] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
   const [showAttach, setShowAttach] = useState(false);
@@ -110,6 +113,10 @@ export function Composer({ onSend, disabled, onTypingChange }: ComposerProps) {
 
   const handleAttach = (id: (typeof ATTACH_ITEMS)[number]["id"]) => {
     setShowAttach(false);
+    if (id === "journal") {
+      onOpenJournal?.();
+      return;
+    }
     if (id === "document" || id === "gallery") {
       fileRef.current?.click();
       return;

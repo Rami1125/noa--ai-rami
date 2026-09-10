@@ -9,6 +9,8 @@ import { MessageBubble, TypingIndicator } from "@/components/chat/MessageBubble"
 import { Composer } from "@/components/chat/Composer";
 import { WallpaperModal } from "@/components/chat/WallpaperModal";
 import { WhatsAppQrModal, type GatewayStatus } from "@/components/chat/WhatsAppQrModal";
+import { JournalModal } from "@/components/chat/JournalModal";
+import type { JournalCard } from "@/lib/journal";
 import {
   CONVERSATIONS,
   INITIAL_CONVERSATION_MESSAGES,
@@ -76,10 +78,45 @@ function ChatPage() {
   const [wallpaper, setWallpaper] = useState<string>("default");
   const [showWallpaperModal, setShowWallpaperModal] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
+  const [showJournalModal, setShowJournalModal] = useState(false);
   const [gatewayStatus, setGatewayStatus] = useState<GatewayStatus>("connected");
   const [isHydrated, setIsHydrated] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const send = useServerFn(sendMessageToMake);
+
+  const handleShareJournalCard = useCallback((card: JournalCard, text: string) => {
+    const time = nowTime();
+    const myMsg: Message = {
+      id: `journal-${Date.now()}`,
+      author: "me",
+      text,
+      time,
+      status: "read",
+      journalCard: card,
+    };
+
+    setConversationMessages((prev) => ({
+      ...prev,
+      noa: [...(prev.noa || []), myMsg],
+    }));
+
+    window.setTimeout(() => {
+      const reflectionText =
+        card.noaReflection ||
+        "תודה שחלקת איתי, ראמי. מותר לך לנשום עמוק, לשחרר את כל כובד היום ולהניח את הראש בשקט. הכל שמור ומאובטח.";
+      const noaReply: Message = {
+        id: `noa-journal-${Date.now()}`,
+        author: "noa",
+        text: `רשמתי ותיעדתי את הרפלקציה ביומן האישי שלך, ראמי ❤️\n\n${reflectionText}\n\nלילה שקט ומנוחה אמיתית, נועה ✨`,
+        time: nowTime(),
+        status: "read",
+      };
+      setConversationMessages((prev) => ({
+        ...prev,
+        noa: [...(prev.noa || []), noaReply],
+      }));
+    }, 1200);
+  }, []);
 
   // Restore client-stored state after initial hydration is completed
   useEffect(() => {
@@ -528,6 +565,7 @@ function ChatPage() {
             onResetHistory={handleResetHistory}
             onOpenQrGateway={() => setShowQrModal(true)}
             gatewayStatus={gatewayStatus}
+            onOpenJournal={() => setShowJournalModal(true)}
           />
 
           <div
@@ -559,6 +597,7 @@ function ChatPage() {
             onSend={handleSend}
             disabled={otherTypingUsers.some((u) => u.userId === "noa")}
             onTypingChange={handleUserTyping}
+            onOpenJournal={() => setShowJournalModal(true)}
           />
         </main>
 
@@ -575,6 +614,12 @@ function ChatPage() {
           status={gatewayStatus}
           onChangeStatus={handleGatewayStatusChange}
           phoneNumber="+972 50-886-1080"
+        />
+
+        <JournalModal
+          isOpen={showJournalModal}
+          onClose={() => setShowJournalModal(false)}
+          onShareToChat={handleShareJournalCard}
         />
       </div>
     </div>

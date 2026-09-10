@@ -1,3 +1,5 @@
+import type { JournalCard } from "@/lib/journal";
+
 export const NOA_AVATAR = "https://i.ibb.co/whtMgBNC/Gemini-Generated-Image-2.png";
 
 export type ContainerAction = "placement" | "swap" | "removal";
@@ -19,6 +21,7 @@ export type Message = {
   time: string;
   status?: "sent" | "delivered" | "read";
   card?: TaskCard;
+  journalCard?: JournalCard;
 };
 
 export type Conversation = {
@@ -253,7 +256,7 @@ export const EMOJIS = [
   "❤️",
 ];
 
-export type QuickCommandCategory = "all" | "containers" | "warehouses" | "status";
+export type QuickCommandCategory = "all" | "containers" | "warehouses" | "status" | "wellness";
 
 export type QuickCommand = {
   id: string;
@@ -267,12 +270,40 @@ export type QuickCommand = {
 
 export const QUICK_COMMAND_CATEGORIES: { id: QuickCommandCategory; label: string }[] = [
   { id: "all", label: "הכל" },
+  { id: "wellness", label: "יומן אישי ורוגע 🌙" },
   { id: "containers", label: "מכולות 8 קו״ב" },
   { id: "warehouses", label: "מחסנים" },
   { id: "status", label: "סידור ופקדונות" },
 ];
 
 export const QUICK_DISPATCH_COMMANDS: QuickCommand[] = [
+  {
+    id: "journal-reflection",
+    emoji: "🌙",
+    label: "סיכום יום ביומן",
+    category: "wellness",
+    prompt: "נועה, בואי נעשה את סיכום היום הרגשי ביומן האישי שלי 🌙",
+    action: "send",
+    description: "פתיחת שאלת רפלקציה יומית ומעקב רגשי",
+  },
+  {
+    id: "mental-breathing",
+    emoji: "🧘",
+    label: "2 דק׳ נשימות ואיפוס",
+    category: "wellness",
+    prompt: "נועה, היה יום אינטנסיבי בסידור... בואי נעשה 2 דקות של נשימה מודרכת ואיפוס מנטלי 🧘",
+    action: "send",
+    description: "תרגיל נשימה והרפיית לחצים",
+  },
+  {
+    id: "vent-day",
+    emoji: "☕",
+    label: "רגע לפרוק מתחים",
+    category: "wellness",
+    prompt: "נועה, אני צריך רגע לפרוק את הלחץ של היום מהסידור... אפשר לשתף אותך?",
+    action: "send",
+    description: "שיחה אישית תומכת ללא שיפוטיות",
+  },
   {
     id: "today-schedule",
     emoji: "📋",

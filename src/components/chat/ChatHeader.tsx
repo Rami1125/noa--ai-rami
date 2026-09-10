@@ -10,6 +10,7 @@ import {
   RotateCcw,
   QrCode,
   ShieldCheck,
+  Moon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ type ChatHeaderProps = {
   onResetHistory?: () => void;
   onOpenQrGateway?: () => void;
   gatewayStatus?: GatewayStatus;
+  onOpenJournal?: () => void;
 };
 
 export function ChatHeader({
@@ -39,6 +41,7 @@ export function ChatHeader({
   onResetHistory,
   onOpenQrGateway,
   gatewayStatus = "connected",
+  onOpenJournal,
 }: ChatHeaderProps) {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -145,6 +148,19 @@ export function ChatHeader({
           </button>
         ) : null}
 
+        {onOpenJournal ? (
+          <button
+            type="button"
+            onClick={onOpenJournal}
+            aria-label="יומן רגשי וסיכום יום עם נועה"
+            title="יומן רגשי וסיכום יום עם נועה 🌙"
+            className="flex items-center gap-1.5 text-[11px] font-medium rounded-full bg-indigo-500/10 text-indigo-300 px-2.5 py-1 transition-colors hover:bg-indigo-500/20 border border-indigo-500/30"
+          >
+            <Moon className="size-3.5 text-indigo-400" />
+            <span className="hidden sm:inline">יומן רגשי</span>
+          </button>
+        ) : null}
+
         {onSimulateColleagueTyping ? (
           <button
             type="button"
@@ -204,6 +220,19 @@ export function ChatHeader({
 
           {showMenu && (
             <div className="wa-pop absolute end-0 top-full z-40 mt-1.5 w-56 overflow-hidden rounded-xl border border-wa-divider bg-wa-panel py-1 shadow-lg">
+              {onOpenJournal && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenu(false);
+                    onOpenJournal();
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-start text-xs text-wa-bubble-text hover:bg-wa-hover"
+                >
+                  <Moon className="size-4 text-indigo-400" />
+                  יומן אישי וסיכום יום רגשי (Journal)
+                </button>
+              )}
               {onOpenQrGateway && (
                 <button
                   type="button"

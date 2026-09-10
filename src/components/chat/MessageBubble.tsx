@@ -1,7 +1,19 @@
-import { CheckCheck, Check, MapPin, Navigation, Package, Clock, User } from "lucide-react";
+import {
+  CheckCheck,
+  Check,
+  MapPin,
+  Navigation,
+  Package,
+  Clock,
+  User,
+  Moon,
+  HeartHandshake,
+  Sparkles,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { ACTION_LABELS, type Message, type TaskCard } from "@/lib/chat-data";
+import type { JournalCard } from "@/lib/journal";
 import type { TypingUser } from "@/lib/typing-events";
 
 function Ticks({ status }: { status: Message["status"] }) {
@@ -80,6 +92,56 @@ function OrderCard({ card }: { card: TaskCard }) {
   );
 }
 
+function JournalCardView({ card }: { card: JournalCard }) {
+  return (
+    <div className="mt-1 mb-2 w-full overflow-hidden rounded-xl border border-indigo-500/30 bg-wa-panel-alt/90 shadow-sm">
+      <div className="flex items-center justify-between gap-2 bg-gradient-to-r from-indigo-950/40 via-indigo-900/30 to-wa-panel px-3 py-2 border-b border-indigo-500/20">
+        <div className="flex items-center gap-2">
+          <Moon className="size-4 text-indigo-400" />
+          <span className="text-xs font-semibold text-indigo-300">
+            יומן אישי וסיכום יום רגשי 🌙
+          </span>
+        </div>
+        <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/20 px-2 py-0.5 text-[11px] font-medium text-indigo-300 border border-indigo-500/30">
+          <span>{card.moodEmoji}</span>
+          <span>{card.moodLabel}</span>
+        </span>
+      </div>
+
+      <div className="space-y-2 p-3 text-xs sm:text-[13px]">
+        <div>
+          <p className="font-medium text-indigo-400/90 text-[11px] mb-0.5">שאלת נועה לפתיחת הלב:</p>
+          <p className="italic text-wa-bubble-text bg-wa-panel/60 p-2 rounded-lg border border-wa-divider/40">
+            &ldquo;{card.question}&rdquo;
+          </p>
+        </div>
+
+        <div>
+          <p className="font-medium text-wa-meta text-[11px] mb-0.5">רפלקציה ותשובה אישית:</p>
+          <p className="whitespace-pre-wrap text-wa-bubble-text bg-wa-panel/80 p-2 rounded-lg border border-wa-divider/50">
+            {card.answer}
+          </p>
+        </div>
+
+        {card.noaReflection && (
+          <div className="rounded-lg bg-rose-500/10 p-2.5 border border-rose-500/20 text-wa-bubble-text text-xs leading-relaxed">
+            <div className="flex items-center gap-1.5 font-medium text-rose-300 mb-1">
+              <HeartHandshake className="size-3.5" />
+              <span>שיקוף ותובנה מנועה AI:</span>
+            </div>
+            <p className="whitespace-pre-line text-wa-bubble-text/95">{card.noaReflection}</p>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between border-t border-wa-divider/50 px-3 py-1.5 text-[10px] text-wa-meta bg-wa-panel/50">
+        <span>{card.date}</span>
+        <span>נשמר ביומן האישי 🔒</span>
+      </div>
+    </div>
+  );
+}
+
 export function MessageBubble({ message }: { message: Message }) {
   const isOut = message.author === "me";
 
@@ -94,6 +156,7 @@ export function MessageBubble({ message }: { message: Message }) {
         )}
       >
         {message.card ? <OrderCard card={message.card} /> : null}
+        {message.journalCard ? <JournalCardView card={message.journalCard} /> : null}
         {message.text ? <p className="whitespace-pre-wrap break-words">{message.text}</p> : null}
         <span className="mt-0.5 flex items-center justify-end gap-1 text-[11px] text-wa-meta">
           {message.time}

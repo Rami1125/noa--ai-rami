@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   CheckCheck,
   Check,
@@ -9,12 +10,18 @@ import {
   Moon,
   HeartHandshake,
   Sparkles,
+  Volume2,
+  Square,
+  Zap,
+  Smartphone,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { ACTION_LABELS, type Message, type TaskCard } from "@/lib/chat-data";
 import type { JournalCard } from "@/lib/journal";
 import type { TypingUser } from "@/lib/typing-events";
+import { FormattedChatMessage } from "./FormattedChatMessage";
+import { noaSpeech } from "@/lib/speech";
 
 function Ticks({ status }: { status: Message["status"] }) {
   if (!status) return null;
@@ -93,6 +100,17 @@ function OrderCard({ card }: { card: TaskCard }) {
 }
 
 function JournalCardView({ card }: { card: JournalCard }) {
+  const reflectionId = `reflection-${card.id || card.date}`;
+  const [speakingId, setSpeakingId] = useState<string | null>(noaSpeech.getCurrentMessageId());
+
+  useEffect(() => {
+    return noaSpeech.subscribe(() => {
+      setSpeakingId(noaSpeech.getCurrentMessageId());
+    });
+  }, []);
+
+  const isSpeakingReflection = speakingId === reflectionId;
+
   return (
     <div className="mt-1 mb-2 w-full overflow-hidden rounded-xl border border-indigo-500/30 bg-wa-panel-alt/90 shadow-sm">
       <div className="flex items-center justify-between gap-2 bg-gradient-to-r from-indigo-950/40 via-indigo-900/30 to-wa-panel px-3 py-2 border-b border-indigo-500/20">
@@ -125,11 +143,41 @@ function JournalCardView({ card }: { card: JournalCard }) {
 
         {card.noaReflection && (
           <div className="rounded-lg bg-rose-500/10 p-2.5 border border-rose-500/20 text-wa-bubble-text text-xs leading-relaxed">
-            <div className="flex items-center gap-1.5 font-medium text-rose-300 mb-1">
-              <HeartHandshake className="size-3.5" />
-              <span>שיקוף ותובנה מנועה AI:</span>
+            <div className="flex items-center justify-between font-medium text-rose-300 mb-1">
+              <div className="flex items-center gap-1.5">
+                <HeartHandshake className="size-3.5" />
+                <span>שיקוף ותובנה מנועה AI:</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (isSpeakingReflection) {
+                    noaSpeech.stop();
+                  } else {
+                    noaSpeech.speak(reflectionId, card.noaReflection || "");
+                  }
+                }}
+                className={cn(
+                  "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors",
+                  isSpeakingReflection
+                    ? "bg-rose-500 text-white animate-pulse"
+                    : "bg-rose-500/20 text-rose-200 hover:bg-rose-500/30",
+                )}
+              >
+                {isSpeakingReflection ? (
+                  <>
+                    <span>עצור</span>
+                    <Square className="size-2.5 fill-current" />
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="size-3" />
+                    <span>הקשב לשיקוף</span>
+                  </>
+                )}
+              </button>
             </div>
-            <p className="whitespace-pre-line text-wa-bubble-text/95">{card.noaReflection}</p>
+            <FormattedChatMessage text={card.noaReflection} isOut={false} />
           </div>
         )}
       </div>
@@ -144,6 +192,23 @@ function JournalCardView({ card }: { card: JournalCard }) {
 
 export function MessageBubble({ message }: { message: Message }) {
   const isOut = message.author === "me";
+  const [speakingId, setSpeakingId] = useState<string | null>(noaSpeech.getCurrentMessageId());
+
+  useEffect(() => {
+    return noaSpeech.subscribe(() => {
+      setSpeakingId(noaSpeech.getCurrentMessageId());
+    });
+  }, []);
+
+  const isSpeakingThis = speakingId === message.id;
+
+  const handleToggleSpeech = () => {
+    if (isSpeakingThis) {
+      noaSpeech.stop();
+    } else if (message.text) {
+      noaSpeech.speak(message.id, message.text);
+    }
+  };
 
   return (
     <div className={cn("flex w-full", isOut ? "justify-end" : "justify-start")}>
@@ -155,10 +220,71 @@ export function MessageBubble({ message }: { message: Message }) {
             : "rounded-es-none bg-wa-bubble-in text-wa-bubble-text",
         )}
       >
+        {!isOut ? (
+          <div className="mb-1.5 flex items-center justify-between gap-2 pb-1 select-none border-b border-wa-divider/20">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[12.5px] font-bold text-wa-green">נועה AI</span>
+              <span className="inline-flex items-center rounded-sm bg-wa-green/15 px-1 py-0.2 text-[9.5px] font-semibold text-wa-green">
+                סבן רשמי ✓
+              </span>
+            </div>
+            {message.text ? (
+              <button
+                type="button"
+                onClick={handleToggleSpeech}
+                title={isSpeakingThis ? "עצירת הקראה" : "הקראת הודעה בקול נשי בעברית 🔊"}
+                aria-label={isSpeakingThis ? "עצירת הקראה" : "הקראת הודעה בקול של נועה"}
+                className={cn(
+                  "flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold transition-all shadow-2xs",
+                  isSpeakingThis
+                    ? "bg-wa-green text-wa-shell animate-pulse scale-102"
+                    : "bg-wa-hover/80 text-wa-meta hover:bg-wa-green/15 hover:text-wa-green",
+                )}
+              >
+                {isSpeakingThis ? (
+                  <>
+                    <span className="flex items-center gap-0.5">
+                      <span
+                        className="size-1 rounded-full bg-current animate-bounce"
+                        style={{ animationDelay: "0ms" }}
+                      />
+                      <span
+                        className="size-1 rounded-full bg-current animate-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      />
+                      <span
+                        className="size-1 rounded-full bg-current animate-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      />
+                    </span>
+                    <span>עצור</span>
+                    <Square className="size-2.5 fill-current" />
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="size-3" />
+                    <span>הקשב לנועה</span>
+                  </>
+                )}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        {message.whatsappBadge ? (
+          <div className="mb-1.5 flex flex-wrap items-center gap-1.5 rounded-md bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/30 select-none">
+            <Smartphone className="size-3 text-emerald-400 shrink-0" />
+            <span>הודעת WhatsApp</span>
+            <span className="text-emerald-500/60">•</span>
+            <span className="flex items-center gap-1 text-emerald-300">
+              <Zap className="size-2.5 text-emerald-400" />
+              {message.whatsappBadge.statusText || "סונכרן מול Make Webhook ⚡ (200 OK)"}
+            </span>
+          </div>
+        ) : null}
         {message.card ? <OrderCard card={message.card} /> : null}
         {message.journalCard ? <JournalCardView card={message.journalCard} /> : null}
-        {message.text ? <p className="whitespace-pre-wrap break-words">{message.text}</p> : null}
-        <span className="mt-0.5 flex items-center justify-end gap-1 text-[11px] text-wa-meta">
+        {message.text ? <FormattedChatMessage text={message.text} isOut={isOut} /> : null}
+        <span className="mt-1 flex items-center justify-end gap-1 text-[11px] text-wa-meta select-none">
           {message.time}
           {isOut ? <Ticks status={message.status} /> : null}
         </span>

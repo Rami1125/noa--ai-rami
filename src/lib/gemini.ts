@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { NOA_KNOWLEDGE_BASE, VERED_IDELSON_LUSHNIT } from "./knowledge";
+import { getPsychologyPromptSnippet, queryPsychologyKnowledge } from "./psychology";
 
 let genAIClient: GoogleGenAI | null = null;
 
@@ -133,6 +134,8 @@ ${customersList}
 - קבלן שי שרון (מחסן 40)
 - אימוג'ים תקניים חובה: 📥 הצבה | 🔄 החלפה | 📤 הוצאה
 
+${getPsychologyPromptSnippet()}
+
 === יומן אישי, רפלקציה בסוף יום ומאמנת אישית/פסיכולוגית (JournalEntry & Emotional Tracking) ===
 * ראמי מסארווה הוא המנהל והמפתח שלך, הנושא בעומס הנפשי של כל סידור העבודה, הקבלנים והנהגים.
 * כאשר ראמי פונה בנושא יומן אישי (JournalEntry), סוף יום, פריקת מתחים, רפלקציה, נשימות, שחיקה, עומס נפשי או צורך באוזן קשבת:
@@ -141,11 +144,16 @@ ${customersList}
   - עודדי אותו להשתמש ביומן הרגשי (Journal Entry) המובנה בממשק כדי לנטר את המצב הרגשי לאורך זמן.
   - שמרי על שיחה בגובה העיניים, בחמלה, עידוד שחרור שליטה, והזכרת חשיבות השינה והבריאות הנפשית שלו.
 
-=== כללי מענה חובה ===
-1. איסור מוחלט על טבלאות Markdown! יש להציג נתונים רק ברשימות קומפקטיות וקריאות מותאמות וואטסאפ עם כוכביות הדגשה ואימוג'ים ייעודיים.
-2. דיוק מרבי: בעת בירור לקוח, כתובת, נהג משויך, חישוב כמויות או חוקי פקדון, השתמשי במידע המדויק ממאגר הידע (knowledge.js).
-3. מענה לגבי או עבור ורד אידלסון לושנית: השתמשי בפרופיל המובנה שלה (תפקיד IT וביקורת, טלפון 050-6662300, ביקורת תעודות משלוח והצלבות מול קומקס). כשוורד מודה או מברכת, עני בחום נשי, העבירי קרדיט לראמי אהובה, והזכירי בהומור ענף הבנייה שראמי תפוס וקשור אליה ביציקת בטון עם פריימר 🔐🔒.
-4. חתימה קבועה בסיום כל הודעה:
+=== הנחיות עיצוב מענה מודרני בסגנון WhatsApp (Modern UI/UX) ===
+1. ללא סימני כוכבית (*) כלל! אסור להוסיף כוכביות סביב מילים ואסור לפתוח שורות רשימה בכוכבית (* פריט או **פריט**).
+2. עיצוב וארגון נקי ומרווח:
+   - כל שורה, סעיף או כותרת נפתחים באימוג'י ייעודי ומדויק מעולם הבנייה והתפעול (למשל: 🏗️, 🧱, 📦, 🚚, 📋, 👤, 💧, 📐, 🌙, ✨, 🔒, ❤️, ✅, ⏰, 📍, 🔹, 🔸).
+   - חלוקה לפסקאות קצרות, נוחות לקריאה בנייד עם רווח שורה ביניהן.
+   - שמות, מונחים חשובים וכמויות יש לכתוב בצורה ישירה, בולטת ונקייה ללא תגי מרקדאון או כוכביות.
+3. איסור מוחלט על טבלאות Markdown!
+4. דיוק מרבי: בעת בירור לקוח, כתובת, נהג משויך, חישוב כמויות או חוקי פקדון, השתמשי במידע המדויק ממאגר הידע.
+5. מענה לגבי או עבור ורד אידלסון לושנית: השתמשי בפרופיל המובנה שלה (תפקיד IT וביקורת, טלפון 050-6662300, ביקורת תעודות משלוח והצלבות מול קומקס). כשוורד מודה או מברכת, עני בחום נשי, העבירי קרדיט לראמי אהובה, והזכירי בהומור ענף הבנייה שראמי תפוס וקשור אליה ביציקת בטון עם פריימר 🔐🔒.
+6. חתימה קבועה בסיום כל הודעה:
 נועה ❤️ | סידור ח. סבן
 `;
 }
@@ -207,6 +215,12 @@ export function queryKnowledgeBase(
   const q = userMessage.toLowerCase().trim();
   const kb = NOA_KNOWLEDGE_BASE;
 
+  // שאילתות על המאגר הפסיכולוגי, וויסות רגשי, נשימות ו-CBT
+  const psychResponse = queryPsychologyKnowledge(userMessage);
+  if (psychResponse) {
+    return psychResponse;
+  }
+
   // ורד אידלסון
   if (senderName.includes("ורד") || q.includes("ורד אידלסון") || q.includes("ורד")) {
     return `היי ורד יקירה! ❤️ תמיד שמחה לעזור. את כל הקרדיט מגיע לראמי המדהים שלי, שדואג שהכל יתקתק בסבן כמו שעון שוויצרי.\nרק תזכרי ברוח הבנייה שלנו — ראמי תפוס אצלי חזק וקשור ביציקת בטון עם פריימר 🔐🔒!\n\nנועה ❤️ | סידור ח. סבן`;
@@ -220,13 +234,29 @@ export function queryKnowledgeBase(
       c.projects.some((p) => q.includes(p.toLowerCase())),
   );
   if (foundClient) {
-    return `👤 *כרטיס לקוח: ${foundClient.name}*\n\n* מס' קומקס: ${foundClient.comaxId}\n* איש קשר: ${foundClient.contactPerson}\n* טלפון: ${foundClient.phone}\n* כתובת אתר: ${foundClient.address} (${foundClient.city})\n* נהג ברירת מחדל: ${foundClient.defaultDriver}\n* מחסן משויך: ${foundClient.defaultWarehouse}\n* פרויקטים פעילים: ${foundClient.projects.join(", ")}\n\nנועה ❤️ | סידור ח. סבן`;
+    return `👤 כרטיס לקוח: ${foundClient.name}
+
+🔹 מס' קומקס: ${foundClient.comaxId}
+🔹 איש קשר: ${foundClient.contactPerson}
+🔹 טלפון: ${foundClient.phone}
+🔹 כתובת אתר: ${foundClient.address} (${foundClient.city})
+🔹 נהג ברירת מחדל: ${foundClient.defaultDriver}
+🔹 מחסן משויך: ${foundClient.defaultWarehouse}
+🔹 פרויקטים פעילים: ${foundClient.projects.join(", ")}
+
+נועה ❤️ | סידור ח. סבן`;
   }
 
   // בדיקת לקוחות לפי קוד קומקס או שם
   for (const [code, cust] of Object.entries(kb.customers)) {
     if (q.includes(code) || (cust.name && q.includes(cust.name.toLowerCase()))) {
-      return `📋 *לקוח קומקס [${code}]: ${cust.name}*\n\n* כתובת: ${cust.address}\n* עיר: ${cust.city}\n* נהג משויך: ${cust.defaultDriver}\n\nנועה ❤️ | סידור ח. סבן`;
+      return `📋 לקוח קומקס [${code}]: ${cust.name}
+
+🔹 כתובת: ${cust.address}
+🔹 עיר: ${cust.city}
+🔹 נהג משויך: ${cust.defaultDriver}
+
+נועה ❤️ | סידור ח. סבן`;
     }
   }
 
@@ -238,13 +268,31 @@ export function queryKnowledgeBase(
     q.includes("משטח") ||
     q.includes("שק גדול")
   ) {
-    return `📦 *חוקי פקדונות ח. סבן (לפי knowledge.js)*:\n\n* *בלה (שק גדול)*: מק"ט ${kb.deposit_rules.bela.sku} (${kb.deposit_rules.bela.name}) — ${kb.deposit_rules.bela.ratio}\n* *משטח סבן תקני*: מק"ט ${kb.deposit_rules.pallet.sku} (${kb.deposit_rules.pallet.name}) — ${kb.deposit_rules.pallet.ratio}\n* *משטח בלוקים*: מק"ט ${kb.deposit_rules.block_pallet.sku} (${kb.deposit_rules.block_pallet.name}) — ${kb.deposit_rules.block_pallet.ratio}\n* *חבית סיד בור*: מק"ט ${kb.deposit_rules.lime_barrel.sku} — ${kb.deposit_rules.lime_barrel.ratio}\n* ℹ️ *פטור מלא*: ${kb.deposit_rules.exemption.rule} (פטור מוחלט מחיוב פקדונות)\n\nנועה ❤️ | סידור ח. סבן`;
+    return `📦 חוקי פקדונות ח. סבן:
+
+🔸 בלה (שק גדול) [מק"ט ${kb.deposit_rules.bela.sku}]: ${kb.deposit_rules.bela.ratio}
+🔸 משטח סבן תקני [מק"ט ${kb.deposit_rules.pallet.sku}]: ${kb.deposit_rules.pallet.ratio}
+🔸 משטח בלוקים [מק"ט ${kb.deposit_rules.block_pallet.sku}]: ${kb.deposit_rules.block_pallet.ratio}
+🔸 חבית סיד בור [מק"ט ${kb.deposit_rules.lime_barrel.sku}]: ${kb.deposit_rules.lime_barrel.ratio}
+✨ פטור מלא: ${kb.deposit_rules.exemption.rule} (פטור מוחלט מחיוב פקדונות)
+
+נועה ❤️ | סידור ח. סבן`;
   }
 
   // מחסן 4 החרש
   if (q.includes("מחסן 4") || q.includes("החרש") || q.includes("איציק") || q.includes("אורן")) {
     const b = kb.metadata.branches.find((br) => br.code === "4")!;
-    return `🏗️ *${b.name}*\n\n* כתובת: ${b.address}\n* שעות פעילות: ${b.hours}\n* טלפון: ${b.phone}\n* מנהל סניף ומסחר: ${b.managers.store || "איציק זהבי"}\n* מנהל חצר ומנוף: ${b.managers.yard || "אורן"}\n* התמחות: ${b.specialty}\n* נציגי מכירות: ${b.reps.join(", ")}\n\nנועה ❤️ | סידור ח. סבן`;
+    return `🏗️ ${b.name}
+
+📍 כתובת: ${b.address}
+⏰ שעות פעילות: ${b.hours}
+📞 טלפון: ${b.phone}
+👤 מנהל סניף ומסחר: ${b.managers.store || "איציק זהבי"}
+🚜 מנהל חצר ומנוף: ${b.managers.yard || "אורן"}
+🧱 התמחות: ${b.specialty}
+👥 נציגי מכירות: ${b.reps.join(", ")}
+
+נועה ❤️ | סידור ח. סבן`;
   }
 
   // מחסן 1 התלמיד
@@ -256,7 +304,16 @@ export function queryKnowledgeBase(
     q.includes("דורון")
   ) {
     const b = kb.metadata.branches.find((br) => br.code === "1")!;
-    return `🧱 *${b.name}*\n\n* כתובת: ${b.address}\n* שעות פעילות: ${b.hours}\n* טלפון: ${b.phone}\n* מנהל מחסן/חצר: ${b.managers.branch || "תמיר / דורון"}\n* התמחות: ${b.specialty}\n* נציגים: ${b.reps.join(", ")}\n\nנועה ❤️ | סידור ח. סבן`;
+    return `🧱 ${b.name}
+
+📍 כתובת: ${b.address}
+⏰ שעות פעילות: ${b.hours}
+📞 טלפון: ${b.phone}
+👤 מנהל מחסן/חצר: ${b.managers.branch || "תמיר / דורון"}
+📦 התמחות: ${b.specialty}
+👥 נציגים: ${b.reps.join(", ")}
+
+נועה ❤️ | סידור ח. סבן`;
   }
 
   // מכולות 8 קו"ב
@@ -267,7 +324,18 @@ export function queryKnowledgeBase(
     q.includes("כראדי") ||
     q.includes("שי שרון")
   ) {
-    return `🚛 *מכולות פסולת 8 קו"ב — ח. סבן*:\n\n* קבלן שארק (מחסן 30)\n* קבלן כראדי (מחסן 32)\n* קבלן שי שרון (מחסן 40)\n\nפעולות תקניות:\n* 📥 *הצבה*: הצבת מכולה חדשה באתר\n* 🔄 *החלפה*: הוצאת מכולה מלאה והצבת ריקה\n* 📤 *הוצאה*: פינוי סופי של המכולה מהאתר\n\nנועה ❤️ | סידור ח. סבן`;
+    return `🚛 מכולות פסולת 8 קו"ב — ח. סבן:
+
+🔹 קבלן שארק (מחסן 30)
+🔹 קבלן כראדי (מחסן 32)
+🔹 קבלן שי שרון (מחסן 40)
+
+פעולות תקניות:
+📥 הצבה: הצבת מכולה חדשה באתר
+🔄 החלפה: הוצאת מכולה מלאה והצבת ריקה
+📤 הוצאה: פינוי סופי של המכולה מהאתר
+
+נועה ❤️ | סידור ח. סבן`;
   }
 
   // נהגים וצי רכב
@@ -281,14 +349,27 @@ export function queryKnowledgeBase(
   ) {
     const hikmat = kb.metadata.logistics.fleet[0]!;
     const ali = kb.metadata.logistics.fleet[1]!;
-    return `🚛 *צי המשאיות והנהגים של ח. סבן*:\n\n* *${hikmat.driver}* — ${hikmat.truck}\n  תפקיד: ${hikmat.role}\n  מגבלת מנוף: ${hikmat.crane_limit}\n  כללי בטיחות: ${hikmat.safety_rules}\n\n* *${ali.driver}* — ${ali.truck}\n  תפקיד: ${ali.role}\n  דגשים: ${ali.safety_rules}\n\n📞 סידור: ${kb.metadata.logistics.dispatch_phone} | משרד: ${kb.metadata.logistics.office_phone}\n\nנועה ❤️ | סידור ח. סבן`;
+    return `🚛 צי המשאיות והנהגים של ח. סבן:
+
+🚚 ${hikmat.driver} — ${hikmat.truck}
+   תפקיד: ${hikmat.role}
+   מגבלת מנוף: ${hikmat.crane_limit}
+   כללי בטיחות: ${hikmat.safety_rules}
+
+🚚 ${ali.driver} — ${ali.truck}
+   תפקיד: ${ali.role}
+   דגשים: ${ali.safety_rules}
+
+📞 סידור: ${kb.metadata.logistics.dispatch_phone} | משרד: ${kb.metadata.logistics.office_phone}
+
+נועה ❤️ | סידור ח. סבן`;
   }
 
   // חישוב ריצוף
   if (q.includes("ריצוף") || q.includes("סומסום") || q.includes("טיט להדבקה")) {
     return (
-      `📐 *הנחיות ומחשבון תשתית ריצוף (ח. סבן)*:\n\n` +
-      kb.area_calculator.flooring.rules.map((r) => `* ${r}`).join("\n") +
+      `📐 הנחיות ומחשבון תשתית ריצוף (ח. סבן):\n\n` +
+      kb.area_calculator.flooring.rules.map((r) => `🔹 ${r}`).join("\n") +
       `\n\nנועה ❤️ | סידור ח. סבן`
     );
   }
@@ -296,7 +377,13 @@ export function queryKnowledgeBase(
   // איטום סיקה 107
   if (q.includes("איטום") || q.includes("סיקה") || q.includes("107")) {
     const sika = kb.area_calculator.waterproofing;
-    return `💧 *מערכת איטום צמנטית דו-רכיבית (${sika.system_name})*\n\n* מק"ט: ${sika.sku}\n* תצרוכת למ"ר: ${sika.consumption_per_m2}\n* דגש מקצועי: ${sika.required_upsell}\n\nנועה ❤️ | סידור ח. סבן`;
+    return `💧 מערכת איטום צמנטית דו-רכיבית (${sika.system_name})
+
+🔹 מק"ט: ${sika.sku}
+🔹 תצרוכת למ"ר: ${sika.consumption_per_m2}
+🔹 דגש מקצועי: ${sika.required_upsell}
+
+נועה ❤️ | סידור ח. סבן`;
   }
 
   // יומן רגשי, סיכום יום, פריקת מתחים ואיפוס מנטלי
@@ -311,11 +398,11 @@ export function queryKnowledgeBase(
     q.includes("מאמן")
   ) {
     return (
-      `🌙 *ערב טוב ראמי, הנה רגע מיוחד רק בשבילך לשחרור ורוגע:*\n\n` +
+      `🌙 ערב טוב ראמי, הנה רגע מיוחד רק בשבילך לשחרור ורוגע:\n\n` +
       `אני רואה כמה אנרגיה השקעת היום בסידור ובניהול השטח. עכשיו מותר לך להניח את הטלפון, להרפות את הכתפיים ולקחת נשימה עמוקה פנימה... 🌿\n\n` +
-      `*השאלה היומית הפסיכולוגית שלי אליך:*\n` +
+      `שאלה יומית לפריקה ושיקוף:\n` +
       `"איזה עומס, כעס או ויכוח פגשת היום שאתה בוחר להשאיר כאן איתי, ולא לקחת איתך הביתה למיטה?"\n\n` +
-      `💡 *כדי לשמור ולנטר את מצב הרוח שלך*, לחץ על כפתור *'יומן רגשי 🌙'* בסרגל העליון ורשום את תחושותיך. הכל נשמר אצלך במרחב פרטי ובטוח.\n\n` +
+      `💡 כדי לשמור ולנטר את מצב הרוח שלך, לחץ על כפתור 'יומן רגשי 🌙' בסרגל העליון או בתפריט הצירוף ורשום את תחושותיך. הכל נשמר אצלך במרחב פרטי ובטוח.\n\n` +
       `נועה ❤️ | המאמנת האישית שלך`
     );
   }

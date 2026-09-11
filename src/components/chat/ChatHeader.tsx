@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowRight,
   Phone,
@@ -11,12 +11,18 @@ import {
   QrCode,
   ShieldCheck,
   Moon,
+  Volume2,
+  Brain,
+  Zap,
+  Download,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { Conversation } from "@/lib/chat-data";
 import type { TypingUser } from "@/lib/typing-events";
 import type { GatewayStatus } from "@/components/chat/WhatsAppQrModal";
+import { noaSpeech } from "@/lib/speech";
+import { PWAInstallHeaderButton } from "@/components/chat/PWAInstallBanner";
 
 type ChatHeaderProps = {
   conversation: Conversation;
@@ -29,6 +35,9 @@ type ChatHeaderProps = {
   onOpenQrGateway?: () => void;
   gatewayStatus?: GatewayStatus;
   onOpenJournal?: () => void;
+  onOpenVoiceSettings?: () => void;
+  onOpenPwaGuide?: () => void;
+  onSendRealWhatsAppToMake?: () => void;
 };
 
 export function ChatHeader({
@@ -42,8 +51,22 @@ export function ChatHeader({
   onOpenQrGateway,
   gatewayStatus = "connected",
   onOpenJournal,
+  onOpenVoiceSettings,
+  onOpenPwaGuide,
+  onSendRealWhatsAppToMake,
 }: ChatHeaderProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isAutoTts, setIsAutoTts] = useState(false);
+
+  useEffect(() => {
+    setIsSpeaking(noaSpeech.isSpeaking());
+    setIsAutoTts(noaSpeech.isAutoTts());
+    return noaSpeech.subscribe(() => {
+      setIsSpeaking(noaSpeech.isSpeaking());
+      setIsAutoTts(noaSpeech.isAutoTts());
+    });
+  }, []);
 
   const isTyping = typingUsers.length > 0;
   const typingLabel =
@@ -148,17 +171,63 @@ export function ChatHeader({
           </button>
         ) : null}
 
+        {onOpenVoiceSettings ? (
+          <button
+            type="button"
+            onClick={onOpenVoiceSettings}
+            aria-label="הגדרות קול נשי של נועה"
+            title="הקראה קולית נשית בעברית — נועה AI 🎙️"
+            className={cn(
+              "flex items-center gap-1.5 text-[11px] font-medium rounded-full px-2.5 py-1 transition-colors border",
+              isSpeaking
+                ? "bg-wa-green text-wa-shell border-wa-green animate-pulse"
+                : isAutoTts
+                  ? "bg-wa-green/15 text-wa-green border-wa-green/30 hover:bg-wa-green/25"
+                  : "bg-wa-panel text-wa-meta border-wa-divider hover:bg-wa-hover hover:text-wa-bubble-text",
+            )}
+          >
+            <Volume2 className="size-3.5 text-wa-green" />
+            <span className="hidden sm:inline">קול נועה</span>
+            {isSpeaking ? (
+              <span className="size-1.5 rounded-full bg-wa-shell animate-ping" />
+            ) : isAutoTts ? (
+              <span className="text-[9px] bg-wa-green/20 text-wa-green px-1 rounded-xs font-bold">
+                אוטו
+              </span>
+            ) : null}
+          </button>
+        ) : null}
+
         {onOpenJournal ? (
           <button
             type="button"
             onClick={onOpenJournal}
-            aria-label="יומן רגשי וסיכום יום עם נועה"
-            title="יומן רגשי וסיכום יום עם נועה 🌙"
+            aria-label="יומן אישי ומאגר פסיכולוגי — נועה AI"
+            title="יומן אישי, רפלקציה ומאגר ידע פסיכולוגי — נועה AI 🧠"
             className="flex items-center gap-1.5 text-[11px] font-medium rounded-full bg-indigo-500/10 text-indigo-300 px-2.5 py-1 transition-colors hover:bg-indigo-500/20 border border-indigo-500/30"
           >
-            <Moon className="size-3.5 text-indigo-400" />
-            <span className="hidden sm:inline">יומן רגשי</span>
+            <Brain className="size-3.5 text-indigo-400" />
+            <span className="hidden sm:inline">מאגר פסיכולוגי ויומן</span>
           </button>
+        ) : null}
+
+        {onSendRealWhatsAppToMake ? (
+          <button
+            type="button"
+            onClick={onSendRealWhatsAppToMake}
+            aria-label="שדר הודעת WhatsApp אמיתית ל-Make"
+            title="שדר הודעת WhatsApp אמיתית (050-886-1080) ל-Make Webhook ⚡"
+            className="hidden xl:flex items-center gap-1.5 text-[11px] font-medium rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 transition-colors hover:bg-emerald-500/25"
+          >
+            <Zap className="size-3.5 fill-emerald-400 text-emerald-400" />
+            <span>סנכרון Make</span>
+          </button>
+        ) : null}
+
+        {onOpenPwaGuide ? (
+          <div className="hidden md:block">
+            <PWAInstallHeaderButton onClick={onOpenPwaGuide} />
+          </div>
         ) : null}
 
         {onSimulateColleagueTyping ? (
@@ -246,6 +315,19 @@ export function ChatHeader({
                   שער וואטסאפ (סריקת QR)
                 </button>
               )}
+              {onOpenVoiceSettings && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenu(false);
+                    onOpenVoiceSettings();
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-start text-xs text-wa-bubble-text hover:bg-wa-hover"
+                >
+                  <Volume2 className="size-4 text-wa-green" />
+                  הגדרות קול נשי (הקראת עברית)
+                </button>
+              )}
               {onSimulateColleagueTyping && (
                 <button
                   type="button"
@@ -270,6 +352,32 @@ export function ChatHeader({
                 >
                   <ImageIcon className="size-4 text-wa-green" />
                   החלפת רקע שיחה
+                </button>
+              )}
+              {onSendRealWhatsAppToMake && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenu(false);
+                    onSendRealWhatsAppToMake();
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-start text-xs text-emerald-400 hover:bg-wa-hover"
+                >
+                  <Zap className="size-4 text-emerald-400 fill-emerald-400" />
+                  שדר הודעת WhatsApp ל-Make Webhook ⚡
+                </button>
+              )}
+              {onOpenPwaGuide && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenu(false);
+                    onOpenPwaGuide();
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-start text-xs text-wa-bubble-text hover:bg-wa-hover"
+                >
+                  <Download className="size-4 text-wa-green" />
+                  מדריך התקנה למסך הבית (PWA) 📱
                 </button>
               )}
               {onResetHistory && (

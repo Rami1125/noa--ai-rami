@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   BookOpen,
+  Brain,
   Calendar,
   Check,
   ChevronDown,
@@ -34,6 +35,7 @@ import {
   type MoodLevel,
 } from "@/lib/journal";
 import { cn } from "@/lib/utils";
+import { PsychologyKnowledgeTab } from "./PsychologyKnowledgeTab";
 
 type JournalModalProps = {
   isOpen: boolean;
@@ -42,7 +44,7 @@ type JournalModalProps = {
 };
 
 export function JournalModal({ isOpen, onClose, onShareToChat }: JournalModalProps) {
-  const [activeTab, setActiveTab] = useState<"write" | "history">("write");
+  const [activeTab, setActiveTab] = useState<"write" | "history" | "psychology">("write");
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [selectedMood, setSelectedMood] = useState<MoodLevel>("good");
   const [question, setQuestion] = useState<string>("");
@@ -221,11 +223,47 @@ export function JournalModal({ isOpen, onClose, onShareToChat }: JournalModalPro
             <TrendingUp className="size-4" />
             <span>מעקב רגשי והיסטוריה ({entries.length})</span>
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("psychology")}
+            className={cn(
+              "relative flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
+              activeTab === "psychology"
+                ? "border-indigo-400 text-indigo-400"
+                : "border-transparent text-wa-meta hover:text-wa-bubble-text",
+            )}
+          >
+            <Brain className="size-4" />
+            <span>מאגר ידע פסיכולוגי וחוסן 🧠</span>
+          </button>
         </div>
 
         {/* Content area */}
         <div className="wa-scroll flex-1 overflow-y-auto p-4 sm:p-6">
-          {activeTab === "write" ? (
+          {activeTab === "psychology" ? (
+            <PsychologyKnowledgeTab
+              onAskNoa={(prompt) => {
+                onClose();
+                if (onShareToChat) {
+                  onShareToChat(
+                    {
+                      id: `psych-prompt-${Date.now()}`,
+                      type: "daily_reflection",
+                      title: "שאלה ממאגר הידע הפסיכולוגי",
+                      date: new Date().toLocaleDateString("he-IL"),
+                      time: new Date().toLocaleTimeString("he-IL", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }),
+                      summary: prompt,
+                      tags: ["מאגר פסיכולוגי 🧠"],
+                    },
+                    prompt,
+                  );
+                }
+              }}
+            />
+          ) : activeTab === "write" ? (
             <div className="space-y-5">
               {/* Step 1: Mood Selector */}
               <div>
@@ -562,6 +600,15 @@ export function JournalModal({ isOpen, onClose, onShareToChat }: JournalModalPro
                   </button>
                 ) : null}
               </>
+            ) : activeTab === "psychology" ? (
+              <button
+                type="button"
+                onClick={() => setActiveTab("write")}
+                className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-indigo-500"
+              >
+                <BookOpen className="size-3.5" />
+                <span>מעבר לכתיבת יומן</span>
+              </button>
             ) : (
               <button
                 type="button"

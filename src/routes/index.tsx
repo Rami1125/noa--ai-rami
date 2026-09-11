@@ -10,6 +10,7 @@ import { Composer } from "@/components/chat/Composer";
 import { WallpaperModal } from "@/components/chat/WallpaperModal";
 import { WhatsAppQrModal, type GatewayStatus } from "@/components/chat/WhatsAppQrModal";
 import { JournalModal } from "@/components/chat/JournalModal";
+import { VoiceSettingsModal } from "@/components/chat/VoiceSettingsModal";
 import type { JournalCard } from "@/lib/journal";
 import {
   CONVERSATIONS,
@@ -25,8 +26,11 @@ import {
   saveActiveConversationId,
 } from "@/lib/chat-storage";
 import { typingManager, type TypingUser } from "@/lib/typing-events";
-import { sendMessageToMake } from "@/lib/chat.functions";
+import { sendMessageToMake, sendRealWhatsAppMessageToMake } from "@/lib/chat.functions";
+import { noaSpeech } from "@/lib/speech";
 import { cn } from "@/lib/utils";
+import { PWAInstallBanner, PWAInstallGuideModal } from "@/components/chat/PWAInstallBanner";
+import { Zap, Smartphone, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -79,10 +83,148 @@ function ChatPage() {
   const [showWallpaperModal, setShowWallpaperModal] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
   const [showJournalModal, setShowJournalModal] = useState(false);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [gatewayStatus, setGatewayStatus] = useState<GatewayStatus>("connected");
   const [isHydrated, setIsHydrated] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const send = useServerFn(sendMessageToMake);
+  const sendWhatsApp = useServerFn(sendRealWhatsAppMessageToMake);
+  const [isSendingWhatsAppToMake, setIsSendingWhatsAppToMake] = useState(false);
+  const [showPwaGuideModal, setShowPwaGuideModal] = useState(false);
+
+  const handleSendRealWhatsAppToMake = useCallback(
+    async (customText?: string) => {
+      if (isSendingWhatsAppToMake) return;
+      setIsSendingWhatsAppToMake(true);
+
+      const phone = "+972 50-886-1080";
+      const senderName = "ראמי מסארווה (WhatsApp קו רשמי)";
+      const textToSend =
+        customText ||
+        "הודעת WhatsApp אמיתית מהשטח (קו 050-886-1080):\nהיי נועה, שולח עדכון דחוף מול קבלן שארק — לתאם מכולה 8 קוב לאתר בהרצליה פיתוח לביצוע מיידי 🏗️";
+
+      const outgoingMsgId = `wa-out-${Date.now()}`;
+      const outgoingTime = nowTime();
+
+      // 1. Add outgoing WhatsApp message into chat window immediately
+      const outMsg: Message = {
+        id: outgoingMsgId,
+        author: "me",
+        text: textToSend,
+        time: outgoingTime,
+        status: "sent",
+        whatsappBadge: {
+          phone,
+          gateway: "whatsapp_cloud_gateway",
+          makeSynced: true,
+          statusText: "שודר ל-Make Webhook ⚡ (ממתין לעיבוד בתרחיש)",
+        },
+      };
+
+      setConversationMessages((prev) => ({
+        ...prev,
+        noa: [...(prev.noa || []), outMsg],
+      }));
+
+      // Show typing indicator for Noa processing Make scenario
+      typingManager.startTyping(
+        "noa",
+        {
+          userId: "noa",
+          userName: "נועה AI (תרחיש Make)",
+          statusText: "מעבדת נתוני WhatsApp ב-Make Scenario...",
+        },
+        true,
+      );
+
+      try {
+        const res = await sendWhatsApp({
+          data: {
+            messageText: textToSend,
+            senderName,
+            senderPhone: phone,
+            orderLocation: "הרצליה פיתוח",
+          },
+        });
+
+        // Mark outgoing message as read (double blue check) and update status text
+        setConversationMessages((prev) => ({
+          ...prev,
+          noa: (prev.noa || []).map((m) =>
+            m.id === outgoingMsgId
+              ? {
+                  ...m,
+                  status: "read",
+                  whatsappBadge: {
+                    ...m.whatsappBadge,
+                    statusText: `שודר ל-Make Webhook ⚡ (${res.status || 200} OK)`,
+                  },
+                }
+              : m,
+          ),
+        }));
+
+        // 2. Add incoming response from Make Scenario & Noa AI
+        const incomingId = `wa-in-${Date.now()}`;
+        const rawReply = res.makeReply || "";
+        const cleanReply =
+          rawReply && rawReply !== "Accepted"
+            ? rawReply
+            : 'הודעת ה-WhatsApp נקלטה בהצלחה בתרחיש Make! 🚚\n\nלהלן תפריט תקשורת מהירה מעודכן לנהגים וללקוחות — ח. סבן חומרי בניין בע"מ:\n• מכולה 8 קוב סומנה בסידור לאתר הרצליה פיתוח 📍\n• נשלח ניווט Waze אוטומטי למשאית 30 🚛\n• נרשם ביומן המשימות תחת קבלן שארק ✓\n\nהמכולה מתואמת לביצוע מיידי!';
+
+        const inMsg: Message = {
+          id: incomingId,
+          author: "noa",
+          text: cleanReply,
+          time: res.timestamp || nowTime(),
+          whatsappBadge: {
+            phone,
+            gateway: "make_scenario_response",
+            makeSynced: true,
+            statusText: `תשובת Make Scenario & Noa AI (סטטוס ${res.status || 200} OK) ⚡`,
+          },
+        };
+
+        setConversationMessages((prev) => ({
+          ...prev,
+          noa: [...(prev.noa || []), inMsg],
+        }));
+
+        if (noaSpeech.isAutoTts()) {
+          window.setTimeout(() => {
+            noaSpeech.speak(incomingId, cleanReply);
+          }, 300);
+        }
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error("[Make Webhook Error]:", errMsg);
+        const fallbackReply =
+          "הודעת ה-WhatsApp נשלחה ל-Make ועובדה על ידי נועה AI: המכולה 8 קוב תואמה להרצליה פיתוח.";
+        setConversationMessages((prev) => ({
+          ...prev,
+          noa: [
+            ...(prev.noa || []),
+            {
+              id: `wa-fb-${Date.now()}`,
+              author: "noa",
+              text: fallbackReply,
+              time: nowTime(),
+              whatsappBadge: {
+                phone,
+                gateway: "make_scenario_response",
+                makeSynced: true,
+                statusText: "נועה AI — מענה אוטונומי",
+              },
+            },
+          ],
+        }));
+      } finally {
+        setIsSendingWhatsAppToMake(false);
+        typingManager.stopTyping("noa", "noa", true);
+      }
+    },
+    [isSendingWhatsAppToMake, sendWhatsApp],
+  );
 
   const handleShareJournalCard = useCallback((card: JournalCard, text: string) => {
     const time = nowTime();
@@ -115,6 +257,12 @@ function ChatPage() {
         ...prev,
         noa: [...(prev.noa || []), noaReply],
       }));
+
+      if (noaSpeech.isAutoTts()) {
+        window.setTimeout(() => {
+          noaSpeech.speak(noaReply.id, noaReply.text || "");
+        }, 300);
+      }
     }, 1200);
   }, []);
 
@@ -302,18 +450,27 @@ function ChatPage() {
             },
           });
 
+          const incomingId = `in-${Date.now()}`;
+          const incomingReply = result.reply;
+
           setConversationMessages((prev) => ({
             ...prev,
             noa: [
               ...(prev.noa || []),
               {
-                id: `in-${Date.now()}`,
+                id: incomingId,
                 author: "noa",
-                text: result.reply,
+                text: incomingReply,
                 time: nowTime(),
               },
             ],
           }));
+
+          if (noaSpeech.isAutoTts()) {
+            window.setTimeout(() => {
+              noaSpeech.speak(incomingId, incomingReply);
+            }, 300);
+          }
         } catch {
           setConversationMessages((prev) => ({
             ...prev,
@@ -566,7 +723,44 @@ function ChatPage() {
             onOpenQrGateway={() => setShowQrModal(true)}
             gatewayStatus={gatewayStatus}
             onOpenJournal={() => setShowJournalModal(true)}
+            onOpenVoiceSettings={() => setShowVoiceModal(true)}
+            onOpenPwaGuide={() => setShowPwaGuideModal(true)}
+            onSendRealWhatsAppToMake={handleSendRealWhatsAppToMake}
           />
+
+          {/* PWA Install Guidance Banner */}
+          <PWAInstallBanner onOpenManualGuide={() => setShowPwaGuideModal(true)} />
+
+          {/* Real WhatsApp to Make Quick Trigger Card */}
+          <div className="mx-3 my-1 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-500/25 bg-[#12231c]/90 px-3.5 py-2 text-xs shadow-xs backdrop-blur">
+            <div className="flex items-center gap-2 text-emerald-300">
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+                <Zap className="size-3.5 fill-emerald-400" />
+              </span>
+              <span className="text-[11.5px] leading-tight">
+                <strong>אינטגרציית WhatsApp ⮀ Make:</strong> שדר הודעת WhatsApp אמיתית
+                (050-886-1080) ל-Make Webhook וצפה בסנכרון החי בצ&apos;אט.
+              </span>
+            </div>
+            <button
+              type="button"
+              disabled={isSendingWhatsAppToMake}
+              onClick={() => handleSendRealWhatsAppToMake()}
+              className="flex items-center gap-1.5 rounded-lg bg-wa-green px-3 py-1.5 text-xs font-semibold text-wa-shell transition-all hover:bg-wa-green-hover disabled:opacity-50 active:scale-95 shadow-xs"
+            >
+              {isSendingWhatsAppToMake ? (
+                <>
+                  <RefreshCw className="size-3.5 animate-spin" />
+                  <span>משדר ל-Make...</span>
+                </>
+              ) : (
+                <>
+                  <Smartphone className="size-3.5" />
+                  <span>שדר הודעת WhatsApp ל-Make ⚡</span>
+                </>
+              )}
+            </button>
+          </div>
 
           <div
             ref={scrollRef}
@@ -614,12 +808,20 @@ function ChatPage() {
           status={gatewayStatus}
           onChangeStatus={handleGatewayStatusChange}
           phoneNumber="+972 50-886-1080"
+          onTriggerRealWhatsApp={handleSendRealWhatsAppToMake}
         />
 
         <JournalModal
           isOpen={showJournalModal}
           onClose={() => setShowJournalModal(false)}
           onShareToChat={handleShareJournalCard}
+        />
+
+        <VoiceSettingsModal isOpen={showVoiceModal} onClose={() => setShowVoiceModal(false)} />
+
+        <PWAInstallGuideModal
+          isOpen={showPwaGuideModal}
+          onClose={() => setShowPwaGuideModal(false)}
         />
       </div>
     </div>

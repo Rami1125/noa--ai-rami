@@ -4,6 +4,9 @@
  * ח. סבן חומרי בניין (1994) בע"מ
  */
 
+import { NOA_PSYCHOLOGY_KNOWLEDGE_BASE } from "./psychology";
+export * from "./psychology";
+
 export type VeredIdelsonLushnitProfile = {
   fullName: string;
   aliases: string[];
@@ -70,6 +73,7 @@ export const VERED_IDELSON_LUSHNIT: VeredIdelsonLushnitProfile = {
 
 export const NOA_KNOWLEDGE_BASE = {
   vered_idelson_lushnit: VERED_IDELSON_LUSHNIT,
+  psychology: NOA_PSYCHOLOGY_KNOWLEDGE_BASE,
   metadata: {
     company: 'ח. סבן חומרי בניין (1994) בע"מ',
     version: "5.2.0",

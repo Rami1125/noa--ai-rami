@@ -11,11 +11,15 @@ import {
   Sticker,
   Trash2,
   Moon,
+  Brain,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { QuickReplyChips } from "@/components/chat/QuickReplyChips";
 import { EmojiPicker } from "@/components/chat/EmojiPicker";
+import { MessageInput } from "@/components/chat/MessageInput";
+
+export { MessageInput } from "@/components/chat/MessageInput";
 
 type ComposerProps = {
   onSend: (text: string) => void;
@@ -25,7 +29,7 @@ type ComposerProps = {
 };
 
 const ATTACH_ITEMS = [
-  { id: "journal", label: "יומן רגשי", hint: "סיכום יום עם נועה 🌙", icon: Moon },
+  { id: "journal", label: "יומן ומאגר פסיכולוגי", hint: "חוסן מנטלי ו-CBT 🧠", icon: Brain },
   { id: "document", label: "מסמך", hint: "צירוף PDF", icon: FileText },
   { id: "camera", label: "מצלמה", hint: "צילום עכשיו", icon: Camera },
   { id: "gallery", label: "גלריה", hint: "תמונות וסרטונים", icon: ImageIcon },
@@ -174,7 +178,7 @@ export function Composer({ onSend, disabled, onTypingChange, onOpenJournal }: Co
 
   if (recording) {
     return (
-      <div className="flex items-center gap-3 bg-wa-topbar px-3 py-2.5">
+      <div className="flex items-center gap-3 bg-wa-panel px-3 py-2.5 border-t border-wa-divider">
         <button
           type="button"
           onClick={() => stopRecording(false)}
@@ -213,7 +217,7 @@ export function Composer({ onSend, disabled, onTypingChange, onOpenJournal }: Co
   }
 
   return (
-    <div className="relative flex flex-col bg-wa-topbar border-t border-wa-divider">
+    <div className="relative flex flex-col bg-wa-panel border-t border-wa-divider">
       {/* Clickable quick-reply chips above the message input field */}
       <QuickReplyChips onSend={onSend} onInsert={handleInsert} disabled={disabled} />
 
@@ -254,97 +258,32 @@ export function Composer({ onSend, disabled, onTypingChange, onOpenJournal }: Co
           </div>
         ) : null}
 
-        <div className="flex items-end gap-1.5">
-          <div className="flex items-center text-wa-meta">
-            <button
-              type="button"
-              onClick={() => {
-                setShowEmoji((value) => !value);
-                setShowAttach(false);
-              }}
-              aria-label="בחירת אימוג'י"
-              title="אימוג'י"
-              className={cn(
-                "rounded-full p-2 transition-colors hover:bg-wa-hover",
-                showEmoji ? "text-wa-green bg-wa-hover" : "text-wa-meta",
-              )}
-            >
-              <Smile className="size-6" />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowEmoji((value) => !value);
-                setShowAttach(false);
-              }}
-              aria-label="מדבקות וסמלים"
-              title="מדבקות וסמלים"
-              className={cn(
-                "hidden rounded-full p-2 transition-colors hover:bg-wa-hover sm:block",
-                showEmoji ? "text-wa-green bg-wa-hover" : "text-wa-meta",
-              )}
-            >
-              <Sticker className="size-6" />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowAttach((value) => !value);
-                setShowEmoji(false);
-              }}
-              aria-label="צירוף קובץ"
-              className={cn(
-                "rounded-full p-2 transition-transform hover:bg-wa-hover",
-                showAttach && "rotate-45",
-              )}
-            >
-              <Paperclip className="size-6" />
-            </button>
-          </div>
-
-          <textarea
-            ref={inputRef}
-            rows={1}
-            value={text}
-            onChange={(event) => {
-              setText(event.target.value);
-              if (event.target.value.trim()) {
-                notifyTyping();
-              } else {
-                clearTyping();
-              }
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                submit();
-              }
-            }}
-            placeholder="הקלד/י הודעה"
-            className="wa-scroll max-h-32 min-h-11 flex-1 resize-none rounded-2xl bg-wa-panel px-4 py-2.5 text-[15px] text-wa-bubble-text outline-none placeholder:text-wa-meta"
-          />
-
-          {text.trim() ? (
-            <button
-              type="button"
-              onClick={submit}
-              disabled={disabled}
-              aria-label="שליחה"
-              className="flex size-11 shrink-0 items-center justify-center rounded-full bg-wa-green text-wa-shell transition-colors hover:bg-wa-green-strong disabled:opacity-60"
-            >
-              <Send className="size-5 rtl:-scale-x-100" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={startRecording}
-              aria-label="הקלטת הודעה קולית"
-              className="flex size-11 shrink-0 items-center justify-center rounded-full bg-wa-green text-wa-shell transition-colors hover:bg-wa-green-strong"
-            >
-              <Mic className="size-5" />
-            </button>
-          )}
-        </div>
+        <MessageInput
+          ref={inputRef}
+          value={text}
+          onChange={(val) => {
+            setText(val);
+            if (val.trim()) {
+              notifyTyping();
+            } else {
+              clearTyping();
+            }
+          }}
+          onSend={submit}
+          onAttachClick={() => {
+            setShowAttach((value) => !value);
+            setShowEmoji(false);
+          }}
+          onEmojiClick={() => {
+            setShowEmoji((value) => !value);
+            setShowAttach(false);
+          }}
+          onVoiceClick={startRecording}
+          disabled={disabled}
+          isAttachActive={showAttach}
+          isEmojiActive={showEmoji}
+          className="border-none bg-transparent px-0 py-0 shadow-none"
+        />
       </div>
     </div>
   );

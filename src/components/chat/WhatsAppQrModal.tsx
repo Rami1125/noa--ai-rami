@@ -27,6 +27,7 @@ type WhatsAppQrModalProps = {
   status: GatewayStatus;
   onChangeStatus: (status: GatewayStatus) => void;
   phoneNumber?: string;
+  onTriggerRealWhatsApp?: () => Promise<void>;
 };
 
 export function WhatsAppQrModal({
@@ -35,6 +36,7 @@ export function WhatsAppQrModal({
   status,
   onChangeStatus,
   phoneNumber = "+972 50-886-1080",
+  onTriggerRealWhatsApp,
 }: WhatsAppQrModalProps) {
   const [copied, setCopied] = useState(false);
   const [autonomousMode, setAutonomousMode] = useState(true);
@@ -395,6 +397,37 @@ export function WhatsAppQrModal({
                     <RefreshCw className="size-3.5" />
                     בדיקת פעימת דופק (Ping)
                   </button>
+                </div>
+
+                {/* Real WhatsApp to Make Webhook Dispatch */}
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/25 p-3.5 text-xs space-y-2.5 mt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                      <Zap className="size-4 text-emerald-400 fill-emerald-400" />
+                      שיגור הודעת WhatsApp אמיתית ל-Make
+                    </span>
+                    <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-300 border border-emerald-500/30">
+                      Live Webhook
+                    </span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-emerald-200/80">
+                    שדר בקשת תיאום מכולה ישירות ל-Make Webhook (`https://hook.eu1.make.com/...`)
+                    וצפה בהודעה ובתשובת התרחיש מופיעות בשידור חי בחלון הצ&apos;אט עם תגי סנכרון
+                    רשמיים.
+                  </p>
+                  {onTriggerRealWhatsApp && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await onTriggerRealWhatsApp();
+                        onClose();
+                      }}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-wa-green py-2.5 text-xs font-bold text-wa-shell transition-all hover:bg-wa-green-hover shadow-md active:scale-98"
+                    >
+                      <Smartphone className="size-4" />
+                      <span>שגר עכשיו הודעת WhatsApp אמיתית ל-Make ועבור לצ&apos;אט 🚀</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

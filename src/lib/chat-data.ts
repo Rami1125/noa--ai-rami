@@ -22,6 +22,12 @@ export type Message = {
   status?: "sent" | "delivered" | "read";
   card?: TaskCard;
   journalCard?: JournalCard;
+  whatsappBadge?: {
+    phone?: string;
+    gateway?: string;
+    makeSynced?: boolean;
+    statusText?: string;
+  };
 };
 
 export type Conversation = {
@@ -118,6 +124,31 @@ export const INITIAL_MESSAGES: Message[] = [
       containerType: "מכולה 12 קוב",
       action: "placement",
       scheduledFor: "היום, 11:00",
+    },
+  },
+  {
+    id: "m-wa-out",
+    author: "me",
+    text: "הודעת WhatsApp אמיתית מקו 050-886-1080 (ראמי):\nהיי נועה, שולח עדכון ישיר מהשטח — נא לתאם מכולה 8 קוב לאתר בהרצליה פיתוח עבור הצוות של שארק 🏗️",
+    time: "09:38",
+    status: "read",
+    whatsappBadge: {
+      phone: "+972 50-886-1080",
+      gateway: "whatsapp_cloud_gateway",
+      makeSynced: true,
+      statusText: "שודר ל-Make Webhook ⚡ (200 OK)",
+    },
+  },
+  {
+    id: "m-wa-in",
+    author: "noa",
+    text: 'הודעת ה-WhatsApp נקלטה בהצלחה בתרחיש Make! 🚚\n\nלהלן תפריט תקשורת מהירה מעודכן לנהגים וללקוחות — ח. סבן חומרי בניין בע"מ:\n• מכולה 8 קוב סומנה בסידור לאתר הרצליה פיתוח 📍\n• נשלח ניווט Waze אוטומטי למשאית 30 🚛\n• נרשם ביומן המשימות תחת קבלן שארק ✓\n\nהמכולה מתואמת לביצוע מיידי!',
+    time: "09:39",
+    whatsappBadge: {
+      phone: "+972 50-886-1080",
+      gateway: "make_scenario_response",
+      makeSynced: true,
+      statusText: "תשובת Make Scenario & Noa AI 🧠 (סונכרן חי)",
     },
   },
 ];
@@ -270,13 +301,49 @@ export type QuickCommand = {
 
 export const QUICK_COMMAND_CATEGORIES: { id: QuickCommandCategory; label: string }[] = [
   { id: "all", label: "הכל" },
-  { id: "wellness", label: "יומן אישי ורוגע 🌙" },
+  { id: "wellness", label: "מאגר פסיכולוגי ויומן 🧠" },
   { id: "containers", label: "מכולות 8 קו״ב" },
   { id: "warehouses", label: "מחסנים" },
   { id: "status", label: "סידור ופקדונות" },
 ];
 
 export const QUICK_DISPATCH_COMMANDS: QuickCommand[] = [
+  {
+    id: "psychology-kb-overview",
+    emoji: "🧠",
+    label: "מאגר פסיכולוגי",
+    category: "wellness",
+    prompt: "נועה, ספרי לי על המאגר הפסיכולוגי שלך ואיזה כלים מנטליים את מציעה לסדרן עבודה",
+    action: "send",
+    description: "סקירת מאגר הכלים הפסיכולוגי של נועה",
+  },
+  {
+    id: "stoic-control",
+    emoji: "🛡️",
+    label: "דיכוטומיית השליטה",
+    category: "wellness",
+    prompt: "נועה, תזכירי לי מה בשליטתי ומה לא בשליטתי מול הבלת״מים בסידור 🛡️",
+    action: "send",
+    description: "כלי סטואי לחלוקת שליטה מול פקקים ותקלות",
+  },
+  {
+    id: "sos-flooding",
+    emoji: "🚨",
+    label: "עזרה בהצפה SOS",
+    category: "wellness",
+    prompt: "נועה, יש עומס מטורף וטלפונים בלי סוף, אני מרגיש מוצף... תני לי פרוטוקול SOS מהיר 🚨",
+    action: "send",
+    description: "עזרה ראשונה בהצפה רגשית ועומס שיחות",
+  },
+  {
+    id: "angry-contractor-nvc",
+    emoji: "🤝",
+    label: "קבלן צועק (NVC)",
+    category: "wellness",
+    prompt: "נועה, קבלן כועס וצועק על עיכוב... איך את ממליצה לפעול לפי NVC ותקשורת מקרבת?",
+    action: "send",
+    description: "טכניקת דה-אסקלציה מול לקוח זועם",
+  },
   {
     id: "journal-reflection",
     emoji: "🌙",
@@ -288,12 +355,21 @@ export const QUICK_DISPATCH_COMMANDS: QuickCommand[] = [
   },
   {
     id: "mental-breathing",
-    emoji: "🧘",
-    label: "2 דק׳ נשימות ואיפוס",
+    emoji: "🫁",
+    label: "אנחת רווחה (60 שניות)",
     category: "wellness",
-    prompt: "נועה, היה יום אינטנסיבי בסידור... בואי נעשה 2 דקות של נשימה מודרכת ואיפוס מנטלי 🧘",
+    prompt: "נועה, בואי נעשה אנחת רווחה פיזיולוגית להורדת דופק והרגעת מערכת העצבים 🫁",
     action: "send",
     description: "תרגיל נשימה והרפיית לחצים",
+  },
+  {
+    id: "cbt-reframing",
+    emoji: "⚖️",
+    label: "פירוק מחשבות מלחיצות",
+    category: "wellness",
+    prompt: "נועה, תעזרי לי לפרק מחשבה מלחיצה ומלקה לפי עקרונות ה-CBT",
+    action: "send",
+    description: "מסגור מחדש לחשיבה קטסטרופלית",
   },
   {
     id: "vent-day",
